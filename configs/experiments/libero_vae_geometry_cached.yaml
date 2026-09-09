@@ -1,0 +1,13 @@
+# Training uses pre-extracted FROZEN raw features; test/rollout stays online.
+base_experiment: configs/experiments/libero_vae_geometry_online.yaml
+cache_dir: outputs/libero_geometry_cache_v1
+output_dir: outputs/libero_vae_geometry_cached_60steps
+online_test_output_dir: outputs/libero_vae_geometry_cached_online_test_final
+steps: 60
+# 0 selects every eligible window, including padded episode starts.
+train_samples: 8
+probe_samples: 3
+validation_samples: 3
+batch_size: 1
+num_workers: 0
+shuffle: true

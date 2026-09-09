@@ -1,0 +1,12 @@
+[submodule "third_party/Track4World"]
+	path = third_party/Track4World
+	url = https://github.com/TencentARC/Track4World.git
+[submodule "third_party/LIBERO"]
+	path = third_party/LIBERO
+	url = https://github.com/Lifelong-Robot-Learning/LIBERO.git
+[submodule "third_party/utils3d"]
+	path = third_party/utils3d
+	url = https://github.com/jiah-cloud/utils3d.git
+[submodule "third_party/Pi3"]
+	path = third_party/Pi3
+	url = https://github.com/yyfz/Pi3.git

@@ -1,0 +1,60 @@
+diff --git a/track4world/nets/model.py b/track4world/nets/model.py
+index df55e34..eeaefd2 100644
+--- a/track4world/nets/model.py
++++ b/track4world/nets/model.py
+@@ -1,8 +1,10 @@
+ from typing import List, Tuple, Union, Optional, Dict, Literal
+ from numbers import Number
+ import importlib
++import os
+ import warnings
+ import sys
++from pathlib import Path
+ 
+ import numpy as np
+ import torch
+@@ -30,6 +32,24 @@ from track4world.nets.external.depth_anything_3.api import DepthAnything3
+ from track4world.utils.geometry_torch import mask_aware_nearest_resize
+ from track4world.utils.alignment import align_points_scale_xyz_shift
+ 
++
++def _da3_model_source() -> str:
++    """Prefer the mirror-downloaded local DA3 checkpoint when available."""
++    configured = os.environ.get("TRACK4WORLD_DA3_PATH")
++    if configured:
++        return configured
++
++    local_dir = (
++        Path(__file__).resolve().parents[2]
++        / "checkpoints"
++        / "DA3NESTED-GIANT-LARGE-1.1"
++    )
++    if (local_dir / "config.json").is_file() and (
++        local_dir / "model.safetensors"
++    ).is_file():
++        return str(local_dir)
++    return "depth-anything/DA3NESTED-GIANT-LARGE-1.1"
++
+ class ResidualConvBlock(nn.Module):
+     """
+     Standard Residual Convolutional Block with GroupNorm or LayerNorm.
+@@ -677,7 +697,7 @@ class Track4World(nn.Module):
+             self.flow_depth = 8
+             
+         elif use_model == 'depthanythingv3':
+-            self.backbone = DepthAnything3.from_pretrained("depth-anything/DA3NESTED-GIANT-LARGE-1.1")
++            self.backbone = DepthAnything3.from_pretrained(_da3_model_source())
+             self.patch_start_idx = 0
+             self.dim_feature = 1024
+             self.flow3d_dim = 256
+@@ -785,9 +805,7 @@ class Track4World(nn.Module):
+ 
+         elif self.use_model == 'depthanythingv3':
+             # Depth Anything V3 backbone with Nested (metric) configuration
+-            self.backbone = DepthAnything3.from_pretrained(
+-                "depth-anything/DA3NESTED-GIANT-LARGE-1.1"
+-            )
++            self.backbone = DepthAnything3.from_pretrained(_da3_model_source())
+ 
+     def load_pretrained_with_remap(self, state_dict):
+         """

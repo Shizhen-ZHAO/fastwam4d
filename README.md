@@ -1,3 +1,11 @@
+# FastWAM4D
+
+This fork adds **Track4World + LIBERO**, offline feature extraction, training from cached features, online-extraction training, and online inference. See the [new-machine setup and migration guide](docs/portability.md), [portable configuration](configs/experiments/libero_portable.yaml), and [known limitations](docs/portability.md#已知限制与验收范围).
+
+Third-party source versions are pinned in Git submodules. After cloning, run `python3 scripts/portability/bootstrap_sources.py`. Model weights, datasets, feature caches, local environment files and credentials are **not** included. The original FastWAM README follows; its installation commands are not the combined Track4World environment recipe.
+
+---
+
 # FastWAM
 
 Official codebase for **Fast-WAM: Do World Action Models Need Test-time Future Imagination?**

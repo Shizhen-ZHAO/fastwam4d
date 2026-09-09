@@ -1,0 +1,78 @@
+# Run scripts/fastwam4d.py configure to resolve paths on YOUR machine.
+# Standalone config: no inheritance from the original machine-specific experiments.
+paths:
+  assets_root: assets_local
+  data_root: datasets/libero
+  track4world_repo: third_party/Track4World
+  libero_repo: third_party/LIBERO
+  utils3d_repo: third_party/utils3d
+portable_suites: [libero_spatial, libero_object, libero_goal, libero_10, libero_90]
+seed: 42
+model_device: cuda:0
+# Use the publicly available official Wan .pth files, not a private/missing
+# converted-weight mirror. The legacy configs keep their existing default.
+redirect_common_files: false
+base_checkpoint: ${paths.assets_root}/fastwam/libero_uncond_2cam224.pt
+model_base_path: ${paths.assets_root}/model_base
+tokenizer_path: ${model_base_path}/Wan-AI/Wan2.1-T2V-1.3B/google/umt5-xxl
+text_weights: ${model_base_path}/Wan-AI/Wan2.2-TI2V-5B/models_t5_umt5-xxl-enc-bf16.pth
+cache_backend: hdf5
+cache_dir: feature_cache/libero
+output_dir: outputs/libero_training
+online_test_output_dir: outputs/libero_online_test
+steps: 10000
+train_samples: 0
+train_indices: null
+probe_samples: 3
+validation_samples: 3
+validation_episode_ids: [45, 46, 47, 48, 49]
+eval_every: 200
+inference_steps: 20
+learning_rate: 0.0001
+gate_learning_rate: 0.001
+batch_size: 1
+num_workers: 2
+shuffle: true
+verify_cache_before_training: false
+training_loss_weights:
+  video: 1.0
+  action: 0.0
+geometry:
+  target: vae_latent
+  latent_channels: 48
+  memory_dim: 512
+  inner_dim: 512
+  heads: 8
+  temporal_layers: 2
+  num_views: 2
+  layers: []
+  same_view_only: true
+  train_mode: adapters
+  history_length: 8
+  history_stride: 1
+  history_fps: 20
+  extractor:
+    repo_path: ${paths.track4world_repo}
+    checkpoint_path: ${paths.assets_root}/track4world/track4world_da3.pth
+    da3_path: ${paths.assets_root}/DA3NESTED-GIANT-LARGE-1.1
+    device: cuda:0
+    image_size: 256
+    grid_size: 8
+    iters: 4
+    confidence_threshold: 0.25
+data:
+  files: []
+  stats_path: ${paths.assets_root}/fastwam/libero_uncond_2cam224_dataset_stats.json
+  text_cache_dir: outputs/text_context
+  episode_ids: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44]
+  horizon: 32
+  video_stride: 4
+  history_length: 8
+  history_stride: 1
+  image_size: 224
+  history_image_size: 256
+  sample_stride: 1
+  rotate_180: true
+  context_len: 128
+  load_history: false
+  history_only: false

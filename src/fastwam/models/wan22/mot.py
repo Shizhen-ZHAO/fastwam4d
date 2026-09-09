@@ -117,6 +117,12 @@ class MoT(nn.Module):
                     context_mask = context_mask.unsqueeze(1)
                 x = x + block.cross_attn(block.norm3(x), context, ctx_mask=context_mask)
 
+        if hasattr(block, "geometry_adapter"):
+            geometry = None if context_payload is None else context_payload.get("geometry")
+            if geometry is None:
+                raise ValueError("Geometry-enabled action blocks require online history conditioning")
+            x = block.geometry_adapter(x, geometry[block.geometry_layer])
+
         mlp_input = modulate(block.norm2(x), shift_mlp, scale_mlp)
         x = block.gate(x, gate_mlp, block.ffn(mlp_input))
         return x

@@ -1,0 +1,2 @@
+# Unified diff context preserves upstream whitespace; it is not source lint.
+patches/*.diff -whitespace

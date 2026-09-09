@@ -90,6 +90,7 @@ def create_fastwam(
     redirect_common_files: bool = True,
     model_dtype: torch.dtype = torch.bfloat16,
     device: str = "cuda",
+    geometry=None,
 ):
     from .models.wan22.fastwam import FastWAM
 
@@ -133,7 +134,7 @@ def create_fastwam(
     if not isinstance(loss, dict):
         raise ValueError(f"`loss` must be dict-like, got {type(loss)}")
 
-    return FastWAM.from_wan22_pretrained(
+    model = FastWAM.from_wan22_pretrained(
         device=device,
         torch_dtype=model_dtype,
         model_id=model_id,
@@ -156,6 +157,11 @@ def create_fastwam(
         loss_lambda_video=float(loss.get("lambda_video", 1.0)),
         loss_lambda_action=float(loss.get("lambda_action", 1.0)),
     )
+    if geometry is not None:
+        if isinstance(geometry, DictConfig):
+            geometry = OmegaConf.to_container(geometry, resolve=True)
+        model.enable_geometry(geometry)
+    return model
 
 
 def create_fastwam_joint(

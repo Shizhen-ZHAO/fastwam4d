@@ -65,7 +65,8 @@ class Wan22Trainer:
         logger.info(
             "Accelerate training: distributed_type=%s zero_stage=%s world_size=%d process_index=%d cfg_mixed_precision=%s accelerator_mixed_precision=%s grad_accum=%d grad_clip=%.4f",
             self.accelerator.distributed_type,
-            self.accelerator.state.deepspeed_plugin.deepspeed_config.get("zero_optimization", {}).get("stage", "unknown"),
+            (self.accelerator.state.deepspeed_plugin.deepspeed_config.get("zero_optimization", {}).get("stage", "unknown")
+             if self.accelerator.state.deepspeed_plugin is not None else "disabled"),
             self.accelerator.num_processes,
             self.accelerator.process_index,
             self.mixed_precision,
@@ -86,6 +87,7 @@ class Wan22Trainer:
         proprio_encoder = getattr(self.model, "proprio_encoder", None)
         if proprio_encoder is not None:
             trainable_params.extend(list(proprio_encoder.parameters()))
+        trainable_params = [p for p in trainable_params if p.requires_grad]
         self.optimizer = torch.optim.AdamW(
             trainable_params,
             lr=self.learning_rate,
@@ -285,6 +287,9 @@ class Wan22Trainer:
 
     @staticmethod
     def _apply_dit_only_train_mode(model):
+        if getattr(model, "geometry_config", None) is not None:
+            model.configure_geometry_train_mode()
+            return
         model.eval()
         model.requires_grad_(False)
         model.dit.train()

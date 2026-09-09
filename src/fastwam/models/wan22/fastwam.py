@@ -84,6 +84,8 @@ class FastWAM(torch.nn.Module):
         self.torch_dtype = torch_dtype
         self.loss_lambda_video = float(loss_lambda_video)
         self.loss_lambda_action = float(loss_lambda_action)
+        self.geometry_config = None
+        self._geometry_extractor = None
 
         self.to(self.device)
 
@@ -180,6 +182,136 @@ class FastWAM(torch.nn.Module):
         }
         return model
 
+    @property
+    def geometry_target(self):
+        return None if self.geometry_config is None else self.geometry_config.get("target", "action")
+
+    def enable_geometry(self, config):
+        """Opt-in online conditioning; original checkpoint keys remain unchanged."""
+        from .geometry_adapter import GeometryTokenizer, ThreeWayGeometryAdapter, VAELatentGeometryAdapter
+        if self.geometry_config is not None:
+            raise ValueError("Geometry is already enabled")
+        config = dict(config)
+        target = config.get("target", "action")
+        if target not in {"action", "vae_latent"}:
+            raise ValueError(f"Unsupported geometry target: {target}")
+        if target == "vae_latent" and not getattr(self.video_expert, "fuse_vae_embedding_in_latents", False):
+            raise ValueError("VAE geometry requires the clean first-frame conditioning path")
+        self.geometry_config = config
+        dim = int(config.get("memory_dim", 512))
+        heads = int(config.get("heads", 8))
+        self.mot.geometry_tokenizer = GeometryTokenizer(
+            memory_dim=dim, heads=heads,
+            temporal_layers=int(config.get("temporal_layers", 2)),
+            num_views=int(config.get("num_views", 2)),
+        ).to(device=self.device, dtype=torch.float32)
+        if target == "vae_latent":
+            self.geometry_layers = []  # No direct ActionDiT geometry modules.
+            self.mot.geometry_latent_adapter = VAELatentGeometryAdapter(
+                latent_channels=int(config.get("latent_channels", getattr(self.vae, "z_dim", 48))),
+                memory_dim=dim, inner_dim=int(config.get("inner_dim", dim)), heads=heads,
+                num_views=int(config.get("num_views", 2)), same_view_only=bool(config.get("same_view_only", True)),
+            ).to(device=self.device, dtype=torch.float32)
+            return
+        layers = config.get("layers", list(range(2, len(self.action_expert.blocks), 3)))
+        if not layers or len(set(layers)) != len(layers):
+            raise ValueError("geometry.layers must contain distinct layer indices")
+        self.geometry_layers = [int(i) for i in layers]
+        for i in self.geometry_layers:
+            if not 0 <= i < len(self.action_expert.blocks):
+                raise ValueError(f"Invalid geometry layer: {i}")
+            block = self.action_expert.blocks[i]
+            block.geometry_layer = str(i)
+            block.geometry_adapter = ThreeWayGeometryAdapter(
+                query_dim=self.action_expert.hidden_dim, memory_dim=dim,
+                inner_dim=int(config.get("inner_dim", dim)), heads=heads,
+            ).to(device=self.device, dtype=torch.float32)
+
+    def configure_geometry_train_mode(self):
+        """Called by the trainer after eval/freeze; never unfreeze Track4World."""
+        mode = self.geometry_config.get("train_mode", "adapters")
+        if mode not in {"adapters", "action", "full"}:
+            raise ValueError(f"Unknown geometry train_mode: {mode}")
+        self.eval().requires_grad_(False)
+        if mode == "full":
+            self.mot.train().requires_grad_(True)
+        elif mode == "action":
+            self.action_expert.train().requires_grad_(True)
+        if self.geometry_target == "vae_latent":
+            # Frozen parameters still need autograd through the full video tower.
+            # MoT's train flag enables its existing gradient-checkpointing paths.
+            self.mot.train()
+            self.mot.geometry_latent_adapter.train().requires_grad_(True)
+        self.mot.geometry_tokenizer.train().requires_grad_(True)
+        for i in self.geometry_layers:
+            self.action_expert.blocks[i].geometry_adapter.train().requires_grad_(True)
+
+    def _prepare_geometry(self, history_images, history_timestamps, history_valid):
+        if self.geometry_config is None:
+            return None
+        if history_images is None or history_timestamps is None or history_valid is None:
+            raise ValueError("Online geometry requires history_images, history_timestamps and history_valid")
+        if self._geometry_extractor is None:
+            from .track4world_online import OnlineTrack4WorldExtractor
+            extraction = dict(self.geometry_config["extractor"])
+            extraction.setdefault("device", str(self.device))
+            self._geometry_extractor = OnlineTrack4WorldExtractor(**extraction)
+        raw = self._geometry_extractor(history_images, history_timestamps, history_valid,
+                                       output_device=self.device)
+        return self._encode_geometry_raw(raw)
+
+    def _encode_geometry_raw(self, raw):
+        """Shared trainable path. Only frozen tracker outputs may be cached.
+
+        Do not put the tokenizer under no_grad: its projections and temporal
+        transformer must learn even when the raw inputs came from disk.
+        """
+        from .geometry_features import validate_raw_geometry
+        if self.geometry_config is None:
+            raise ValueError("Cached geometry supplied but geometry is not enabled")
+        extraction = self.geometry_config.get("extractor", {})
+        validate_raw_geometry(raw, views=self.geometry_config.get("num_views", 2),
+                              length=self.geometry_config.get("history_length"),
+                              points=int(extraction["grid_size"]) ** 2 if "grid_size" in extraction else None)
+        raw = {key: value.detach() for key, value in raw.items()}
+        payload = self.mot.geometry_tokenizer(raw)
+        if self.geometry_target == "vae_latent":
+            return payload
+        return {str(i): {"kv": self.action_expert.blocks[i].geometry_adapter.project_memories(payload["memories"]),
+                         "masks": payload["masks"]} for i in self.geometry_layers}
+
+    def _condition_observation_latent(self, latent, geometry):
+        if self.geometry_target != "vae_latent":
+            return latent
+        if latent is None or geometry is None:
+            raise ValueError("VAE geometry requires current observation latent and geometry memories")
+        return self.mot.geometry_latent_adapter(latent, geometry)
+
+    @staticmethod
+    def _is_geometry_state_key(key):
+        return key.startswith(("geometry_tokenizer.", "geometry_latent_adapter.")) or ".geometry_adapter." in key
+
+    def save_geometry_adapter(self, path, **metadata):
+        if self.geometry_config is None:
+            raise ValueError("Geometry is not enabled")
+        if self.geometry_config.get("train_mode", "adapters") != "adapters":
+            raise ValueError("Adapter-only saving requires train_mode=adapters; use save_checkpoint for action/full training")
+        state = {k: v.detach().cpu() for k, v in self.mot.state_dict().items()
+                 if self._is_geometry_state_key(k)}
+        torch.save({"geometry_config": self.geometry_config, "geometry_adapter": state,
+                    "metadata": metadata}, path)
+
+    def load_geometry_adapter(self, path):
+        payload = torch.load(path, map_location="cpu", weights_only=True)
+        if self.geometry_config is None:
+            self.enable_geometry(payload["geometry_config"])
+        expected = {k for k in self.mot.state_dict()
+                    if self._is_geometry_state_key(k)}
+        if set(payload["geometry_adapter"]) != expected:
+            raise ValueError("Geometry adapter checkpoint architecture mismatch")
+        self.mot.load_state_dict(payload["geometry_adapter"], strict=False)
+        return payload
+
     def to(self, *args, **kwargs):
         super().to(*args, **kwargs)
         self.mot.to(*args, **kwargs)
@@ -275,6 +407,17 @@ class FastWAM(torch.nn.Module):
         return frames
 
     def build_inputs(self, sample, tiled: bool = False):
+        # Explicit data routing, independent of train()/eval(). Inference APIs
+        # never consult this field and always require live RGB history.
+        if "geometry_raw" in sample:
+            if any(key in sample for key in ("history_images", "history_timestamps", "history_valid")):
+                raise ValueError("Ambiguous geometry: supply either geometry_raw or online RGB history")
+            geometry = self._encode_geometry_raw(sample["geometry_raw"])
+            if sample["geometry_raw"]["scene"].shape[0] != sample["video"].shape[0]:
+                raise ValueError("Geometry/video batch size mismatch")
+        else:
+            geometry = self._prepare_geometry(sample.get("history_images"),
+                                              sample.get("history_timestamps"), sample.get("history_valid"))
         video = sample["video"]
         if "context" not in sample or "context_mask" not in sample:
             raise ValueError(
@@ -343,6 +486,10 @@ class FastWAM(torch.nn.Module):
             first_frame_latents = input_latents[:, :, 0:1]
             fuse_flag = True
 
+        # Keep input_latents/targets in the ORIGINAL VAE space. Only the model's
+        # observation condition is adapted, OUTSIDE the frozen VAE's no_grad.
+        first_frame_condition = self._condition_observation_latent(first_frame_latents, geometry)
+
         if context.ndim != 3 or context_mask.ndim != 2:
             raise ValueError(
                 f"`context/context_mask` must be [B,L,D]/[B,L], got {tuple(context.shape)} and {tuple(context_mask.shape)}"
@@ -372,10 +519,12 @@ class FastWAM(torch.nn.Module):
             image_is_pad = image_is_pad.to(device=self.device, dtype=torch.bool, non_blocking=True)
 
         return {
+            "geometry": geometry,
             "context": context,
             "context_mask": context_mask,
             "input_latents": input_latents,
             "first_frame_latents": first_frame_latents,
+            "first_frame_condition": first_frame_condition,
             "fuse_vae_embedding_in_latents": fuse_flag,
             "action": action,
             "action_is_pad": action_is_pad,
@@ -465,7 +614,7 @@ class FastWAM(torch.nn.Module):
         target_video = self.train_video_scheduler.training_target(input_latents, noise_video, timestep_video)
 
         if inputs["first_frame_latents"] is not None:
-            latents[:, :, 0:1] = inputs["first_frame_latents"]
+            latents = torch.cat([inputs["first_frame_condition"], latents[:, :, 1:]], dim=2)
 
         noise_action = torch.randn_like(action)
         timestep_action = self.train_action_scheduler.sample_training_t(
@@ -519,6 +668,7 @@ class FastWAM(torch.nn.Module):
                 "action": {
                     "context": action_pre["context"],
                     "mask": action_pre["context_mask"],
+                    "geometry": inputs["geometry"],
                 },
             },
             t_mod_all={
@@ -701,6 +851,7 @@ class FastWAM(torch.nn.Module):
         video_kv_cache: list[dict[str, torch.Tensor]],
         attention_mask: torch.Tensor,
         video_seq_len: int,
+        geometry: Optional[dict] = None,
     ) -> torch.Tensor:
         action_pre = self.action_expert.pre_dit(
             action_tokens=latents_action,
@@ -715,6 +866,7 @@ class FastWAM(torch.nn.Module):
             action_context_payload={
                 "context": action_pre["context"],
                 "mask": action_pre["context_mask"],
+                "geometry": geometry,
             },
             video_kv_cache=video_kv_cache,
             attention_mask=attention_mask,
@@ -740,8 +892,17 @@ class FastWAM(torch.nn.Module):
         seed: Optional[int] = None,
         rand_device: str = "cpu",
         tiled: bool = False,
-        test_action_with_infer_action: bool = True,
+        test_action_with_infer_action: Optional[bool] = None,
+        history_images: Optional[torch.Tensor] = None,
+        history_timestamps: Optional[torch.Tensor] = None,
+        history_valid: Optional[torch.Tensor] = None,
     ) -> dict[str, Any]:
+        if self.geometry_target == "action":
+            raise ValueError("Action-only geometry supports infer_action with history, not infer_joint")
+        if test_action_with_infer_action is None:
+            # Preserve the legacy non-geometry self-check. Geometry's production
+            # path extracts once; explicit True performs a SECOND diagnostic call.
+            test_action_with_infer_action = self.geometry_config is None
         self.eval()
         if test_action_with_infer_action:
             if seed is None:
@@ -758,6 +919,9 @@ class FastWAM(torch.nn.Module):
                 rand_device=rand_device,
                 tiled=tiled,
                 proprio=proprio.clone() if proprio is not None else None,
+                history_images=history_images,
+                history_timestamps=history_timestamps,
+                history_valid=history_valid,
             )["action"]
         
         if input_image.ndim == 3:
@@ -820,6 +984,8 @@ class FastWAM(torch.nn.Module):
         input_image = input_image.to(device=self.device, dtype=self.torch_dtype)
         first_frame_latents = self._encode_input_image_latents_tensor(input_image=input_image, tiled=tiled)
         latents_video[:, :, 0:1] = first_frame_latents.clone()
+        geometry = self._prepare_geometry(history_images, history_timestamps, history_valid)
+        first_frame_condition = self._condition_observation_latent(first_frame_latents, geometry)
         fuse_flag = bool(getattr(self.video_expert, "fuse_vae_embedding_in_latents", False))
 
         use_prompt = prompt is not None
@@ -873,7 +1039,9 @@ class FastWAM(torch.nn.Module):
             timestep_action = step_t_action.unsqueeze(0).to(dtype=latents_action.dtype, device=self.device)
 
             pred_video_posi, pred_action_posi = self._predict_joint_noise(
-                latents_video=latents_video,
+                # Adapter is computed once. The solver state and final decoder
+                # remain in the original VAE space, including the first frame.
+                latents_video=torch.cat([first_frame_condition, latents_video[:, :, 1:]], dim=2),
                 latents_action=latents_action,
                 timestep_video=timestep_video,
                 timestep_action=timestep_action,
@@ -918,8 +1086,12 @@ class FastWAM(torch.nn.Module):
         seed: Optional[int] = None,
         rand_device: str = "cpu",
         tiled: bool = False,
+        history_images: Optional[torch.Tensor] = None,
+        history_timestamps: Optional[torch.Tensor] = None,
+        history_valid: Optional[torch.Tensor] = None,
     ) -> dict[str, Any]:
         self.eval()
+        geometry = self._prepare_geometry(history_images, history_timestamps, history_valid)
         if str(getattr(self.video_expert, "video_attention_mask_mode", "")) != "first_frame_causal":
             raise ValueError(
                 "`infer_action` requires `video_attention_mask_mode='first_frame_causal'`."
@@ -959,6 +1131,7 @@ class FastWAM(torch.nn.Module):
 
         input_image = input_image.to(device=self.device, dtype=self.torch_dtype)
         first_frame_latents = self._encode_input_image_latents_tensor(input_image=input_image, tiled=tiled)
+        first_frame_latents = self._condition_observation_latent(first_frame_latents, geometry)
         fuse_flag = bool(getattr(self.video_expert, "fuse_vae_embedding_in_latents", False))
 
         use_prompt = prompt is not None
@@ -1038,6 +1211,7 @@ class FastWAM(torch.nn.Module):
                 video_kv_cache=video_kv_cache,
                 attention_mask=attention_mask,
                 video_seq_len=video_seq_len,
+                geometry=geometry,
             )
             pred_action = pred_action_posi
 
@@ -1093,13 +1267,37 @@ class FastWAM(torch.nn.Module):
         }
         if self.proprio_encoder is not None:
             payload["proprio_encoder"] = self.proprio_encoder.state_dict()
+        if self.geometry_config is not None:
+            payload["geometry_config"] = self.geometry_config
         if optimizer is not None:
             payload["optimizer"] = optimizer.state_dict()
         torch.save(payload, path)
 
     def load_checkpoint(self, path, optimizer=None):
-        payload = torch.load(path, map_location="cpu")
+        if str(path).endswith(".safetensors"):
+            from safetensors.torch import load_file
+
+            raw_state = load_file(path, device="cpu")
+            payload = {}
+            mot_state = {
+                key.removeprefix("model.mot."): value
+                for key, value in raw_state.items()
+                if key.startswith("model.mot.")
+            }
+            proprio_state = {
+                key.removeprefix("model.proprio_encoder."): value
+                for key, value in raw_state.items()
+                if key.startswith("model.proprio_encoder.")
+            }
+            if mot_state:
+                payload["mot"] = mot_state
+            if proprio_state:
+                payload["proprio_encoder"] = proprio_state
+        else:
+            payload = torch.load(path, map_location="cpu")
         if "mot" in payload:
+            if payload.get("geometry_config") is not None and self.geometry_config is None:
+                self.enable_geometry(payload["geometry_config"])
             self.mot.load_state_dict(payload["mot"], strict=False)
         elif "dit" in payload:
             logger.warning("Loading legacy `dit` checkpoint into video expert only.")

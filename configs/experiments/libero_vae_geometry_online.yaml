@@ -1,0 +1,21 @@
+# Inherit local paths and the real HDF5 reader, NOT the trained action adapter.
+base_experiment: configs/experiments/libero_track4world_online.yaml
+output_dir: outputs/libero_vae_geometry_online
+steps: 60
+train_samples: 8
+probe_samples: 3
+validation_samples: 3
+validation_episode_ids: [4, 5]
+eval_every: 10
+inference_steps: 20
+learning_rate: 0.0001
+gate_learning_rate: 0.001
+training_loss_weights:
+  video: 1.0
+  action: 0.0
+geometry:
+  target: vae_latent
+  latent_channels: 48
+  layers: []
+  same_view_only: true
+  train_mode: adapters

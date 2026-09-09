@@ -1,3 +1,11 @@
+# FastWAM4D
+
+此分支包含 **FastWAM + Track4World + LIBERO** 的离线特征抽取、离线特征训练、在线提取训练与在线推理。请先看[新机器配置与移植指南](docs/portability.md)、[可移植配置模板](configs/experiments/libero_portable.yaml)和[已知限制](docs/portability.md#已知限制与验收范围)。
+
+第三方源码通过固定版本的 Git 子模块获取；克隆后执行 `python3 scripts/portability/bootstrap_sources.py`。权重、数据、特征缓存和私钥不上传。下面保留原版 FastWAM 说明；联合环境请使用上面的迁移指南，不要直接混装多个上游 requirements。
+
+---
+
 # FastWAM
 
 **Fast-WAM: Do World Action Models Need Test-time Future Imagination?** 的官方代码仓库。

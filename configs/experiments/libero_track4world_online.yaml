@@ -1,0 +1,50 @@
+# Small real-data experiment, not a full LIBERO benchmark or an offline feature cache.
+seed: 42
+model_device: cuda:0
+base_checkpoint: /mnt/homes/zhaoshizhen/checkpoints/fastwam/libero_uncond_2cam224.pt
+model_base_path: /mnt/homes/zhaoshizhen/checkpoints/fastwam/model_base
+tokenizer_path: /mnt/homes/zhaoshizhen/lf/repos/FastWAM/checkpoints/Wan-AI/Wan2.1-T2V-1.3B/google/umt5-xxl
+text_weights: /mnt/homes/zhaoshizhen/checkpoints/fastwam/model_base/DiffSynth-Studio/Wan-Series-Converted-Safetensors/models_t5_umt5-xxl-enc-bf16.safetensors
+output_dir: outputs/libero_track4world_online
+steps: 60
+learning_rate: 0.0001
+gate_learning_rate: 0.001
+train_samples: 8
+probe_samples: 3
+eval_every: 10
+inference_steps: 5
+geometry:
+  memory_dim: 512
+  inner_dim: 512
+  heads: 8
+  temporal_layers: 2
+  num_views: 2
+  layers: [2, 5, 8, 11, 14, 17, 20, 23, 26, 29]
+  train_mode: adapters
+  history_length: 8
+  history_stride: 1
+  history_fps: 20
+  extractor:
+    repo_path: /mnt/homes/zhaoshizhen/lf/Track4World
+    checkpoint_path: /mnt/homes/zhaoshizhen/lf/Track4World/checkpoints/track4world_da3.pth
+    da3_path: /mnt/homes/zhaoshizhen/lf/Track4World/checkpoints/DA3NESTED-GIANT-LARGE-1.1
+    device: cuda:1
+    image_size: 256
+    grid_size: 8
+    iters: 4
+    confidence_threshold: 0.25
+data:
+  files:
+    - /mnt/homes/zhaoshizhen/datasets/libero/official_hf/libero_spatial/pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate_demo.hdf5
+  stats_path: /mnt/homes/zhaoshizhen/checkpoints/fastwam/libero_uncond_2cam224_dataset_stats.json
+  text_cache_dir: outputs/libero_track4world_online/text_context
+  episode_ids: [0, 1, 2, 3]
+  horizon: 32
+  video_stride: 4
+  history_length: 8
+  history_stride: 1
+  image_size: 224
+  history_image_size: 256
+  sample_stride: 4
+  rotate_180: true
+  context_len: 128

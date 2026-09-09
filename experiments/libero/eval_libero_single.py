@@ -367,6 +367,7 @@ def _predict_action_chunk(
     input_w: int,
     input_h: int,
     model_device: str,
+    geometry_history=None,
 ) -> tuple[np.ndarray, dict, Optional[list[Image.Image]]]:
     num_inference_steps_cfg = cfg.EVALUATION.get("num_inference_steps", None)
     if num_inference_steps_cfg is None:
@@ -404,12 +405,20 @@ def _predict_action_chunk(
         "tiled": bool(cfg.EVALUATION.get("tiled", False)),
     }
     visualize_future_video = bool(cfg.EVALUATION.get("visualize_future_video", False))
+    if getattr(model, "geometry_config", None) is not None:
+        if visualize_future_video and model.geometry_target != "vae_latent":
+            raise ValueError("Future-video geometry inference requires target=vae_latent")
+        if geometry_history is None:
+            raise ValueError("Online geometry requires the rollout history buffer")
+        infer_kwargs.update(geometry_history.inputs())
     predicted_future_frames = None
     if visualize_future_video:
         infer_kwargs["num_video_frames"] = _get_num_video_frames(cfg)
     elif "num_video_frames" in inspect.signature(model.infer_action).parameters:
         infer_kwargs["num_video_frames"] = _get_num_video_frames(cfg)
 
+    extraction_calls = getattr(getattr(model, "_geometry_extractor", None), "calls", 0)
+    inference_start = time.monotonic()
     with torch.no_grad():
         if visualize_future_video:
             pred = model.infer_joint(**infer_kwargs)
@@ -417,6 +426,15 @@ def _predict_action_chunk(
         else:
             pred = model.infer_action(**infer_kwargs)
     action = pred["action"]  # [T, D]
+    if not torch.isfinite(action).all():
+        raise FloatingPointError("Non-finite policy action in LIBERO rollout")
+    if geometry_history is not None:
+        calls = model._geometry_extractor.calls - extraction_calls
+        if calls != 1:
+            raise RuntimeError(f"Expected one online extraction per replan; got {calls}")
+        logging.info("Online geometry replan: denoising_steps=%s extractor_calls=%s total_seconds=%.3f tracker_seconds=%.3f",
+                     num_inference_steps, calls, time.monotonic() - inference_start,
+                     model._geometry_extractor.last_seconds)
 
     action = _denormalize_action(action, processor)[0]  # [T, D]
 
@@ -465,6 +483,15 @@ def run_single_episode(
 
     env.reset()
     obs = env.set_init_state(initial_state)
+    geometry_history = None
+    if getattr(model, "geometry_config", None) is not None:
+        from fastwam.datasets.libero_geometry import LiberoHistoryBuffer
+        geo = model.geometry_config
+        geometry_history = LiberoHistoryBuffer(
+            length=int(geo.get("history_length", 8)), stride=int(geo.get("history_stride", 1)),
+            image_size=int(geo["extractor"].get("image_size", 256)),
+            fps=float(geo.get("history_fps", 20)),
+        )
     if use_action_ensembler:
         ensembler = ActionEnsembler()
         ensembler.reset()
@@ -482,6 +509,9 @@ def run_single_episode(
     pbar = tqdm(total=max_steps + num_steps_wait, desc=f"Episode {episode_idx + 1}")
     while t < max_steps + num_steps_wait:
         pbar.update(1)
+        if geometry_history is not None:
+            history_imgs = get_libero_image(obs)
+            geometry_history.append([history_imgs["image"], history_imgs["wrist_image"]], t)
         if t < num_steps_wait:
             obs, _, done, _ = env.step(get_libero_dummy_action())
             t += 1
@@ -498,6 +528,7 @@ def run_single_episode(
                 input_w=input_w,
                 input_h=input_h,
                 model_device=model_device,
+                geometry_history=geometry_history,
             )
             if predicted_future_frames is not None:
                 current_replan_idx += 1
@@ -606,8 +637,12 @@ def run_single_task(
     if visualize_future_video:
         results["episode_future_video_psnr"] = []
         results["future_video_psnr_mean"] = None
+    geometry_enabled = getattr(model, "geometry_config", None) is not None
+    if geometry_enabled:
+        results["online_geometry"] = {"features_precomputed": False, "episodes": []}
 
     for trial_idx in range(int(cfg.EVALUATION.num_trials)):
+        extraction_calls = getattr(getattr(model, "_geometry_extractor", None), "calls", 0)
         success, replay_images, predicted_future_video_clips, episode_mean_psnr = run_single_episode(
             env=env,
             initial_state=initial_states[trial_idx],
@@ -626,6 +661,12 @@ def run_single_task(
             results["success_episodes"].append(trial_idx)
         else:
             results["failure_episodes"].append(trial_idx)
+        if geometry_enabled:
+            results["online_geometry"]["episodes"].append({
+                "episode": trial_idx, "executed_steps": len(replay_images),
+                "extractor_calls": model._geometry_extractor.calls - extraction_calls,
+                "last_quality": model._geometry_extractor.last_quality,
+            })
         if visualize_future_video:
             results["episode_future_video_psnr"].append(episode_mean_psnr)
 
@@ -672,6 +713,7 @@ def run_single_task(
         valid_episode_psnr = [x for x in results["episode_future_video_psnr"] if x is not None]
         if len(valid_episode_psnr) > 0:
             results["future_video_psnr_mean"] = float(np.mean(valid_episode_psnr))
+    env.close()
     return results
 
 
@@ -699,6 +741,8 @@ def eval_single_process(cfg: DictConfig):
     model_dtype = _mixed_precision_to_model_dtype(cfg.get("mixed_precision", "bf16"))
     model = instantiate(cfg.model, model_dtype=model_dtype, device=model_device)
     _load_model_checkpoint(model, str(cfg.ckpt))
+    if cfg.EVALUATION.get("geometry_adapter"):
+        model.load_geometry_adapter(str(cfg.EVALUATION.geometry_adapter))
     model = model.to(model_device).eval()
 
     dataset_stats_path = _resolve_dataset_stats_path(cfg)

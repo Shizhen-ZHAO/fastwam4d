@@ -1,5 +1,12 @@
 
 # Misc
+/assets_local/
+/datasets/
+/feature_cache/
+/logs/
+/configs/local/
+/.venv-fastwam4d/
+/.conda/
 outputs/
 checkpoints
 data/*
@@ -31,6 +38,8 @@ evaluate_results/
 *.bin
 *.pickle
 *.txt
+!requirements-track4world-online.txt
+!requirements/*.txt
 
 # Other uncheckable file types
 *.zip
