@@ -185,6 +185,7 @@ PYTHONPATH=src python -m pytest -q tests
 
 ## 已知限制与验收范围
 
+- 本次发布实测：干净克隆 **165 项 CPU 测试通过**；新入口五任务 15 窗口提取、生成配置直接离线训练、在线训练和 20 步在线测试通过。训练仅 3 步，不能证明收敛；详细数值与未覆盖范围见[发布验收记录](release_validation.md)。
 - 本轮移植不改变之前审查的核心模型实现。尚有：HDF5 初始身份属性部分写入后的恢复问题；adapter 热启动未校验 heads/same_view_only；无缓存测试未完整校验训练预处理/producer/base checkpoint；旧并行 manager 的设备映射问题。不要把已有小规模通过当作这些边界已修复。
 - 目前训练 runner 是单进程 + 多 DataLoader worker，不是 DDP trainer。`--adapter` 是权重热启动，不恢复 optimizer/sampler/步数；默认结束时保存 adapter，长训练的周期 checkpoint/完整恢复需另行实现。
 - 旧实验报告中的 `outputs/...` 链接指向未上传的本机产物，不是 GitHub 附件。原版 57 项 CPU 测试、真实五任务离线训练及无缓存在线测试已在开发机通过；新迁移入口另有 CPU 回归。目标机器的驱动/EGL、完整环境安装和全量训练需按上述步骤验收，不能预先保证。
