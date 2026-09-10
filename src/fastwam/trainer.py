@@ -80,6 +80,14 @@ class Wan22Trainer:
         if self.val_dataset is not None:
             self._assert_dataset_length_consistent(self.val_dataset, "val_dataset")
 
+        geometry_cache = getattr(self.train_dataset, "geometry_cache", None)
+        if geometry_cache is not None and hasattr(self.model, "set_geometry_provenance"):
+            self.model.set_geometry_provenance(geometry_cache.contract["extractor"])
+            logger.info(
+                "Bound geometry adapter to offline cache producer contract=%s",
+                geometry_cache.contract_id,
+            )
+
         # Freeze non-trainable modules before optimizer/deepspeed initialization.
         # This keeps DiT (+ optional proprio encoder) as trainable when ZeRO builds optimizer state.
         self._apply_dit_only_train_mode(self.model)
@@ -191,7 +199,7 @@ class Wan22Trainer:
                     step=int(self.global_step),
                 )
             self.accelerator.wait_for_everyone()
-            models.clear()
+            # SAVE hooks receive Accelerator._models itself, not a copy.
             weights.clear()
 
         def load_adapter_only(models, input_dir):
@@ -199,6 +207,8 @@ class Wan22Trainer:
             if not adapter_path.is_file():
                 raise FileNotFoundError(f"Missing geometry adapter training state: {adapter_path}")
             self._unwrap_model().load_geometry_adapter(adapter_path)
+            # LOAD hooks receive a temporary list: consume it to suppress the
+            # full-backbone loader, without touching Accelerator._models.
             models.clear()
 
         self._geometry_save_hook = self.accelerator.register_save_state_pre_hook(save_adapter_only)
@@ -237,6 +247,8 @@ class Wan22Trainer:
             raise TypeError(f"`{dataset_name}` must implement __len__ for rank consistency checks.")
 
         local_length = len(dataset)
+        if local_length < 1:
+            raise ValueError(f"`{dataset_name}` must contain at least one sample.")
         gathered_lengths = self.accelerator.gather(
             torch.tensor([local_length], device=self.accelerator.device, dtype=torch.int64)
         ).reshape(-1)
@@ -465,8 +477,16 @@ class Wan22Trainer:
             return None
 
         model = self._unwrap_model()
-        was_dit_training = model.dit.training
+        training_modes = [(module, module.training) for module in model.modules()]
         model.eval()
+        try:
+            return self._evaluate(model)
+        finally:
+            # Restore the mixed frozen-tower/trainable-adapter modes exactly.
+            for module, training in training_modes:
+                module.training = training
+
+    def _evaluate(self, model):
 
         # eval_index = (self.global_step + self.accelerator.process_index) % len(self.val_dataset)
         rng = torch.Generator(device="cpu").manual_seed(self.global_step + self.accelerator.process_index)
@@ -641,8 +661,6 @@ class Wan22Trainer:
         action_l2_mean = gathered_metrics[:, 7].mean().item() if action_l2 is not None else None
         action_l1_mean = gathered_metrics[:, 8].mean().item() if action_l1 is not None else None
 
-        if was_dit_training:
-            self._set_dit_only_train_mode()
 
         result = {
             "val_loss": float(mean_metrics[0].item()),
@@ -675,9 +693,51 @@ class Wan22Trainer:
             "global_step": int(self.global_step),
             "epoch": int(self.epoch),
             "batch_in_epoch": int(self.batch_in_epoch),
+            "training_contract": self._training_resume_contract(),
         }
         with open(state_file, "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=True, indent=2)
+
+    def _training_resume_contract(self):
+        model = self._unwrap_model()
+        return {
+            "format": "fastwam_resumable_epoch_sampler_v2",
+            "dataset_length": int(len(self.train_dataset)),
+            "seed": int(self.seed),
+            "batch_size_per_rank": int(self.batch_size),
+            "num_processes": int(self.accelerator.num_processes),
+            "gradient_accumulation_steps": int(self.gradient_accumulation_steps),
+            "max_steps": int(self.max_steps),
+            "mixed_precision": str(self.mixed_precision),
+            "learning_rate": float(self.learning_rate),
+            "weight_decay": float(self.weight_decay),
+            "max_grad_norm": float(self.max_grad_norm),
+            "lr_scheduler_type": str(self.cfg.lr_scheduler_type),
+            "base_checkpoint_sha256": getattr(model, "base_checkpoint_sha256", None),
+        }
+
+    def _validate_training_resume_contract(self, payload, state_file):
+        saved = payload.get("training_contract")
+        if saved is None:
+            logger.warning(
+                "Trainer state `%s` predates strict resume contracts; exact schedule/data "
+                "continuity cannot be established.",
+                state_file,
+            )
+            return
+        current = self._training_resume_contract()
+        if saved == current:
+            return
+        differences = {
+            key: {"saved": saved.get(key), "current": current.get(key)}
+            for key in sorted(set(saved) | set(current))
+            if saved.get(key) != current.get(key)
+        }
+        raise ValueError(
+            "Training resume contract mismatch. Resume with the original total max_steps, "
+            "world size, batch/accumulation, seed, optimizer schedule and base checkpoint. "
+            f"Differences: {differences}"
+        )
 
     def save_checkpoint(self):
         step_tag = f"step_{self.global_step:06d}"
@@ -698,11 +758,15 @@ class Wan22Trainer:
         return {"weights_path": ckpt_path, "state_path": state_path}
 
     def load_training_state(self, state_dir: str):
-        self.accelerator.load_state(input_dir=state_dir)
         state_file = Path(state_dir) / "trainer_state.json"
+        payload = None
         if state_file.exists():
             with open(state_file, "r", encoding="utf-8") as f:
                 payload = json.load(f)
+            self._validate_training_resume_contract(payload, state_file)
+
+        self.accelerator.load_state(input_dir=state_dir)
+        if payload is not None:
             self.global_step = int(payload["global_step"])
 
             if "epoch" in payload and "batch_in_epoch" in payload:
@@ -767,10 +831,10 @@ class Wan22Trainer:
                 continue
 
             with self.accelerator.accumulate(self.model):
-                train_model = self.model if hasattr(self.model, "training_loss") else self._unwrap_model()
-
                 with self.accelerator.autocast():
-                    loss, loss_dict = train_model.training_loss(sample)
+                    # FastWAM.forward delegates to training_loss. Enter through
+                    # the wrapper so DDP prepares and synchronizes its reducer.
+                    loss, loss_dict = self.model(sample)
                 self.accelerator.backward(loss)
 
                 if self.accelerator.sync_gradients:
@@ -860,7 +924,11 @@ class Wan22Trainer:
                                 eval_payload["eval/action_l1"] = float(metrics["action_l1"])
                             self._wandb_log(eval_payload)
 
-                    if self.save_every > 0 and self.global_step % self.save_every == 0:
+                    if (
+                        self.save_every > 0
+                        and self.global_step % self.save_every == 0
+                        and self.global_step < self.max_steps
+                    ):
                         ckpt_info = self.save_checkpoint()
                         if self.accelerator.is_main_process:
                             logger.info(

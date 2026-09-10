@@ -11,7 +11,8 @@ train:
   geometry_cache_root: ${paths.geometry_cache}
   geometry_config: ${model.geometry}
   geometry_history_length: ${model.geometry.history_length}
-  geometry_history_stride: 1
+  geometry_history_stride: ${model.geometry.history_stride}
+  geometry_history_fps: ${model.geometry.history_fps}
   geometry_image_size: ${model.geometry.extractor.image_size}
   geometry_require_complete_cache: true
 
@@ -38,5 +39,6 @@ val:
   geometry_mode: online
   geometry_config: ${model.geometry}
   geometry_history_length: ${model.geometry.history_length}
-  geometry_history_stride: 1
+  geometry_history_stride: ${model.geometry.history_stride}
+  geometry_history_fps: ${model.geometry.history_fps}
   geometry_image_size: ${model.geometry.extractor.image_size}

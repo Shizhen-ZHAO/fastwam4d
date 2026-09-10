@@ -38,6 +38,13 @@ def main():
     if not any(arg.startswith("paths=") for arg in hydra_args):
         hydra_args.append(f"paths={path_file.stem}")
 
+    # The geometry wrapper defaults to the eager inference path that is covered
+    # by the online Track4World regression and simulator smoke tests.  Keep this
+    # as a CLI default (rather than changing the official sim config) so users
+    # can still opt into compilation explicitly after validating it locally.
+    if not any(arg.startswith("EVALUATION.compile_action_infer=") for arg in hydra_args):
+        hydra_args.append("EVALUATION.compile_action_infer=false")
+
     libero_repo = Path(paths["libero_repo"]).resolve()
     for entry in (
         paths["track4world_extra_pythonpath"],

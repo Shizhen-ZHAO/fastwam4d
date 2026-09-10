@@ -6,6 +6,7 @@ from contextlib import contextmanager
 import fcntl
 import hashlib
 import json
+import logging
 import os
 from pathlib import Path
 
@@ -16,22 +17,15 @@ from torch.utils.data import Dataset
 
 from fastwam.models.wan22.geometry_features import validate_raw_geometry
 from fastwam.datasets.lerobot.robot_video_dataset import RobotVideoDataset
+from fastwam.datasets.geometry_provenance import dataset_identity, extractor_identity
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def _digest_json(value) -> str:
     payload = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(payload).hexdigest()
-
-
-def _file_digest(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _tensor_digest(raw: dict[str, torch.Tensor]) -> str:
@@ -54,18 +48,12 @@ def _atomic_json(path: Path, value):
 
 
 def _contract(history, geometry) -> dict:
-    extractor = dict(geometry["extractor"])
-    extractor.pop("device", None)
-    roots = []
-    for root in history.dataset_dirs:
-        root_path = Path(root)
-        roots.append(
-            {
-                "path": str(root_path.resolve()),
-                "info_sha256": _file_digest(root_path / "meta" / "info.json"),
-                "episodes_sha256": _file_digest(root_path / "meta" / "episodes.jsonl"),
-            }
-        )
+    logging.getLogger(__name__).info(
+        "Fingerprinting geometry datasets, weights and source code (full content read)."
+    )
+    roots = [dataset_identity(root) for root in history.dataset_dirs]
+    if len({root["dataset_uid"] for root in roots}) != len(roots):
+        raise ValueError("Duplicate geometry datasets would alias the same cache episodes")
     return {
         "schema": SCHEMA_VERSION,
         "boundary": "frozen_track4world_raw_before_trainable_tokenizer",
@@ -79,20 +67,28 @@ def _contract(history, geometry) -> dict:
         "orientation": "lerobot_rgb_as_stored",
         "padding": "replicate_oldest_and_mask_invalid",
         "resize": "bilinear_align_corners_false_antialias_true",
-        "extractor": extractor,
+        "extractor": extractor_identity(geometry["extractor"]),
     }
 
 
 class LeRobotGeometryCache:
-    """HDF5 cache keyed by dataset root, episode and original frame index."""
+    """HDF5 cache keyed by dataset content, episode and original frame index."""
 
     def __init__(self, root, history, geometry, *, create: bool = False):
         self.root = Path(root).expanduser().resolve()
         self.history = history
         self.geometry = dict(geometry)
+        manifest_path = self.root / "manifest.json"
+        if manifest_path.is_file():
+            manifest = json.loads(manifest_path.read_text())
+            if manifest.get("contract", {}).get("schema") != SCHEMA_VERSION:
+                raise ValueError(
+                    "Legacy geometry cache has no verified producer identity. "
+                    "Keep it intact and re-extract into a new v2 cache directory; "
+                    "automatic conversion cannot establish which weights produced it."
+                )
         self.contract = _contract(history, geometry)
         self.contract_id = _digest_json(self.contract)
-        manifest_path = self.root / "manifest.json"
         if create and not manifest_path.exists():
             manifest = {"contract": self.contract, "contract_id": self.contract_id}
             try:
@@ -117,7 +113,10 @@ class LeRobotGeometryCache:
         )
 
     def _identity(self, index: int) -> dict:
-        return self.history.metadata(int(index))
+        identity = dict(self.history.metadata(int(index)))
+        identity.pop("dataset_root")
+        identity["dataset_uid"] = self.contract["dataset_roots"][identity["dataset_id"]]["dataset_uid"]
+        return identity
 
     def _episode_length(self, identity: dict) -> int:
         dataset = self.history.dataset._datasets[identity["dataset_id"]]
@@ -126,7 +125,7 @@ class LeRobotGeometryCache:
     def entry_path(self, index: int) -> Path:
         identity = self._identity(index)
         episode = {
-            "dataset_root": identity["dataset_root"],
+            "dataset_uid": identity["dataset_uid"],
             "episode_index": identity["episode_index"],
         }
         key = _digest_json(episode)
@@ -155,7 +154,7 @@ class LeRobotGeometryCache:
         episode_length = self._episode_length(identity)
         expected = {
             "contract_id": self.contract_id,
-            "dataset_root": identity["dataset_root"],
+            "dataset_uid": identity["dataset_uid"],
             "episode_index": identity["episode_index"],
         }
         if "contract_id" in handle.attrs:
@@ -230,13 +229,13 @@ class LeRobotGeometryCache:
 
     def coverage(self) -> dict[str, int]:
         expected = written = missing_episodes = 0
-        for dataset in self.history.dataset._datasets:
-            dataset_root = str(Path(dataset.root).resolve())
+        for dataset_id, dataset in enumerate(self.history.dataset._datasets):
+            dataset_uid = self.contract["dataset_roots"][dataset_id]["dataset_uid"]
             for episode_index in range(int(dataset.meta.total_episodes)):
                 episode_length = int(dataset.meta.episodes[episode_index]["length"])
                 expected += episode_length
                 key = _digest_json(
-                    {"dataset_root": dataset_root, "episode_index": episode_index}
+                    {"dataset_uid": dataset_uid, "episode_index": episode_index}
                 )
                 path = self.root / "episodes" / key[:2] / f"{key}.h5"
                 if not path.is_file():
@@ -331,6 +330,7 @@ class GeometryRobotVideoDataset(RobotVideoDataset):
         geometry_config=None,
         geometry_history_length: int = 8,
         geometry_history_stride: int = 1,
+        geometry_history_fps: float | None = None,
         geometry_image_size: int = 256,
         geometry_require_complete_cache: bool = True,
         **kwargs,
@@ -347,6 +347,14 @@ class GeometryRobotVideoDataset(RobotVideoDataset):
             history_stride=geometry_history_stride,
             image_size=geometry_image_size,
         )
+        if (
+            geometry_history_fps is not None
+            and self.geometry_history.fps != float(geometry_history_fps)
+        ):
+            raise ValueError(
+                "Geometry FPS mismatch: "
+                f"model={float(geometry_history_fps)}, dataset={self.geometry_history.fps}"
+            )
         if len(self) != len(self.geometry_history):
             raise ValueError("FastWAM supervision and geometry history lengths differ")
         self.geometry_cache = None

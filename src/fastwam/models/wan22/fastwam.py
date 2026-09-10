@@ -89,6 +89,10 @@ class FastWAM(torch.nn.Module):
         self.mot.compile_training_layers = self.compile_training_denoise
         self.geometry_config = None
         self._geometry_extractor = None
+        self.geometry_provenance = None
+        self._expected_geometry_provenance = None
+        self.base_checkpoint_sha256 = None
+        self._expected_base_checkpoint_sha256 = None
 
         self.to(self.device)
 
@@ -205,6 +209,13 @@ class FastWAM(torch.nn.Module):
         num_views = int(config.get("num_views", 2))
         if num_views != 2:
             raise ValueError("LIBERO geometry requires exactly two cameras")
+        history_length = int(config.get("history_length", 8))
+        history_stride = int(config.get("history_stride", 1))
+        history_fps = float(config.get("history_fps", 20.0))
+        if not 1 <= history_length <= 8:
+            raise ValueError("Track4World geometry history_length must be in [1, 8]")
+        if history_stride < 1 or history_fps <= 0:
+            raise ValueError("Geometry history_stride and history_fps must be positive")
         memory_dim = int(config.get("memory_dim", 512))
         heads = int(config.get("heads", 8))
         self.geometry_config = config
@@ -243,11 +254,16 @@ class FastWAM(torch.nn.Module):
                 "Online geometry requires history_images, history_timestamps and history_valid"
             )
         if self._geometry_extractor is None:
+            from fastwam.datasets.geometry_provenance import extractor_identity
             from .track4world_online import OnlineTrack4WorldExtractor
 
             extraction = dict(self.geometry_config["extractor"])
             if extraction.get("device") in (None, "same", "model"):
                 extraction["device"] = str(self.device)
+            # Check weights and producer source before loading the large online
+            # extractor. This binds inference to the producer used for the
+            # offline training cache, independent of machine paths/device IDs.
+            self.set_geometry_provenance(extractor_identity(extraction))
             self._geometry_extractor = OnlineTrack4WorldExtractor(**extraction)
         raw = self._geometry_extractor(
             history_images,
@@ -283,6 +299,127 @@ class FastWAM(torch.nn.Module):
     def _is_geometry_state_key(key):
         return key.startswith(("geometry_tokenizer.", "geometry_latent_adapter."))
 
+    def _uses_track4world_provenance(self, config=None):
+        config = self.geometry_config if config is None else config
+        extractor = {} if config is None else dict(config.get("extractor", {}))
+        return all(key in extractor for key in ("repo_path", "checkpoint_path", "da3_path"))
+
+    def set_geometry_provenance(self, provenance):
+        if provenance is None:
+            raise ValueError("Geometry provenance cannot be null")
+        if (
+            self._expected_geometry_provenance is not None
+            and provenance != self._expected_geometry_provenance
+        ):
+            raise ValueError(
+                "Online Track4World producer differs from the adapter's training producer"
+            )
+        if self.geometry_provenance is not None and provenance != self.geometry_provenance:
+            raise ValueError("Conflicting geometry producer identities in one model")
+        self.geometry_provenance = provenance
+
+    def set_base_checkpoint_provenance(self, sha256):
+        sha256 = str(sha256)
+        if (
+            self._expected_base_checkpoint_sha256 is not None
+            and sha256 != self._expected_base_checkpoint_sha256
+        ):
+            raise ValueError(
+                "Loaded base FastWAM checkpoint differs from the one used to train the adapter"
+            )
+        if self.base_checkpoint_sha256 is not None and sha256 != self.base_checkpoint_sha256:
+            raise ValueError("Conflicting base FastWAM checkpoints loaded into one model")
+        self.base_checkpoint_sha256 = sha256
+
+    def _load_geometry_provenance(self, payload, *, require_base=True):
+        provenance = payload.get("geometry_provenance")
+        if provenance is None:
+            if self._uses_track4world_provenance():
+                raise ValueError(
+                    "Geometry checkpoint has no Track4World/DA3 provenance; "
+                    "re-save it with the current integration before production use"
+                )
+            return
+        self._expected_geometry_provenance = provenance
+        if self.geometry_provenance is not None:
+            self.set_geometry_provenance(self.geometry_provenance)
+
+        base_sha256 = payload.get("base_checkpoint_sha256")
+        if base_sha256 is None:
+            if require_base and self._uses_track4world_provenance():
+                raise ValueError(
+                    "Geometry checkpoint has no base FastWAM identity; re-save it with "
+                    "the current integration before production use"
+                )
+            return
+        self._expected_base_checkpoint_sha256 = str(base_sha256)
+        if self.base_checkpoint_sha256 is not None:
+            self.set_base_checkpoint_provenance(self.base_checkpoint_sha256)
+
+    def _geometry_checkpoint_contract(self, config=None):
+        """Path-independent semantics required to reuse an adapter safely."""
+        config = self.geometry_config if config is None else config
+        if config is None:
+            raise ValueError("Geometry is not enabled")
+        extractor = dict(config.get("extractor", {}))
+        return {
+            "format": "fastwam_current_vae_three_bank_residual_v1",
+            "target": str(config.get("target")),
+            "train_mode": str(config.get("train_mode", "adapters")),
+            "camera_layout": "external_then_wrist_horizontal_equal_width",
+            "num_views": int(config.get("num_views", 2)),
+            "history_length": int(config.get("history_length", 8)),
+            "history_stride": int(config.get("history_stride", 1)),
+            "history_fps": float(config.get("history_fps", 20.0)),
+            "latent_channels": int(config.get("latent_channels", getattr(self.vae, "z_dim", 48))),
+            "memory_dim": int(config.get("memory_dim", 512)),
+            "inner_dim": int(config.get("inner_dim", config.get("memory_dim", 512))),
+            "heads": int(config.get("heads", 8)),
+            "temporal_layers": int(config.get("temporal_layers", 2)),
+            "same_view_only": bool(config.get("same_view_only", True)),
+            "extractor": {
+                "image_size": int(extractor.get("image_size", 256)),
+                "grid_size": int(extractor.get("grid_size", 8)),
+                "iters": int(extractor.get("iters", 4)),
+                "confidence_threshold": float(extractor.get("confidence_threshold", 0.25)),
+            },
+        }
+
+    def _load_geometry_adapter_payload(self, payload):
+        if not isinstance(payload, dict) or "geometry_adapter" not in payload:
+            raise ValueError("Not a FastWAM geometry adapter checkpoint")
+        checkpoint_config = payload.get("geometry_config")
+        if self.geometry_config is None:
+            if checkpoint_config is None:
+                raise ValueError(
+                    "Geometry adapter has no configuration; enable geometry from the local config first"
+                )
+            if self._uses_track4world_provenance(checkpoint_config):
+                raise ValueError(
+                    "Enable geometry from this machine's local Hydra/path config before loading "
+                    "a production adapter; checkpoint paths are intentionally not trusted"
+                )
+            self.enable_geometry(checkpoint_config)
+        checkpoint_contract = payload.get("geometry_contract")
+        if checkpoint_contract is None:
+            if checkpoint_config is None:
+                raise ValueError("Geometry adapter checkpoint has no compatibility contract")
+            checkpoint_contract = self._geometry_checkpoint_contract(checkpoint_config)
+        current_contract = self._geometry_checkpoint_contract()
+        if checkpoint_contract != current_contract:
+            raise ValueError(
+                "Geometry adapter configuration mismatch: "
+                f"checkpoint={checkpoint_contract}, current={current_contract}"
+            )
+        self._load_geometry_provenance(payload)
+        expected = {
+            key for key in self.mot.state_dict() if self._is_geometry_state_key(key)
+        }
+        if set(payload["geometry_adapter"]) != expected:
+            raise ValueError("Geometry adapter checkpoint architecture mismatch")
+        self.mot.load_state_dict(payload["geometry_adapter"], strict=False)
+        return payload
+
     def save_geometry_adapter(self, path, **metadata):
         if self.geometry_config is None:
             raise ValueError("Geometry is not enabled")
@@ -291,9 +428,22 @@ class FastWAM(torch.nn.Module):
             for key, value in self.mot.state_dict().items()
             if self._is_geometry_state_key(key)
         }
+        if self._uses_track4world_provenance() and self.geometry_provenance is None:
+            raise ValueError(
+                "Cannot save a production geometry adapter before binding its "
+                "Track4World/DA3 producer provenance"
+            )
+        if self._uses_track4world_provenance() and self.base_checkpoint_sha256 is None:
+            raise ValueError(
+                "Cannot save a production geometry adapter before loading and binding "
+                "its immutable base FastWAM checkpoint"
+            )
         torch.save(
             {
                 "geometry_config": self.geometry_config,
+                "geometry_contract": self._geometry_checkpoint_contract(),
+                "geometry_provenance": self.geometry_provenance,
+                "base_checkpoint_sha256": self.base_checkpoint_sha256,
                 "geometry_adapter": state,
                 "metadata": metadata,
             },
@@ -302,15 +452,7 @@ class FastWAM(torch.nn.Module):
 
     def load_geometry_adapter(self, path):
         payload = torch.load(path, map_location="cpu", weights_only=True)
-        if self.geometry_config is None:
-            self.enable_geometry(payload["geometry_config"])
-        expected = {
-            key for key in self.mot.state_dict() if self._is_geometry_state_key(key)
-        }
-        if set(payload["geometry_adapter"]) != expected:
-            raise ValueError("Geometry adapter checkpoint architecture mismatch")
-        self.mot.load_state_dict(payload["geometry_adapter"], strict=False)
-        return payload
+        return self._load_geometry_adapter_payload(payload)
 
     def to(self, *args, **kwargs):
         super().to(*args, **kwargs)
@@ -1336,6 +1478,9 @@ class FastWAM(torch.nn.Module):
         seed: Optional[int] = None,
         rand_device: str = "cpu",
         tiled: bool = False,
+        history_images: Optional[torch.Tensor] = None,
+        history_timestamps: Optional[torch.Tensor] = None,
+        history_valid: Optional[torch.Tensor] = None,
     ):
         return self.infer_joint(
             prompt=prompt,
@@ -1353,6 +1498,9 @@ class FastWAM(torch.nn.Module):
             seed=seed,
             rand_device=rand_device,
             tiled=tiled,
+            history_images=history_images,
+            history_timestamps=history_timestamps,
+            history_valid=history_valid,
         )
 
     def save_checkpoint(self, path, optimizer=None, step=None):
@@ -1365,6 +1513,13 @@ class FastWAM(torch.nn.Module):
             payload["proprio_encoder"] = self.proprio_encoder.state_dict()
         if self.geometry_config is not None:
             payload["geometry_config"] = self.geometry_config
+            payload["geometry_contract"] = self._geometry_checkpoint_contract()
+            if self._uses_track4world_provenance() and self.geometry_provenance is None:
+                raise ValueError(
+                    "Cannot save a geometry checkpoint without Track4World/DA3 provenance"
+                )
+            payload["geometry_provenance"] = self.geometry_provenance
+            payload["base_checkpoint_sha256"] = self.base_checkpoint_sha256
         if optimizer is not None:
             payload["optimizer"] = optimizer.state_dict()
         torch.save(payload, path)
@@ -1372,18 +1527,34 @@ class FastWAM(torch.nn.Module):
     def load_checkpoint(self, path, optimizer=None):
         payload = torch.load(path, map_location="cpu", weights_only=True, mmap=True)
         if "geometry_adapter" in payload:
-            if self.geometry_config is None:
-                self.enable_geometry(payload["geometry_config"])
-            expected = {
-                key for key in self.mot.state_dict() if self._is_geometry_state_key(key)
-            }
-            if set(payload["geometry_adapter"]) != expected:
-                raise ValueError("Geometry adapter checkpoint architecture mismatch")
-            self.mot.load_state_dict(payload["geometry_adapter"], strict=False)
+            self._load_geometry_adapter_payload(payload)
         elif "mot" in payload:
-            if payload.get("geometry_config") is not None and self.geometry_config is None:
-                self.enable_geometry(payload["geometry_config"])
-            self.mot.load_state_dict(payload["mot"], strict=False)
+            checkpoint_geometry = payload.get("geometry_config")
+            if checkpoint_geometry is not None:
+                if self.geometry_config is None:
+                    self.enable_geometry(checkpoint_geometry)
+                checkpoint_contract = payload.get("geometry_contract")
+                if checkpoint_contract is None:
+                    checkpoint_contract = self._geometry_checkpoint_contract(checkpoint_geometry)
+                if checkpoint_contract != self._geometry_checkpoint_contract():
+                    raise ValueError("Full checkpoint geometry configuration mismatch")
+                self._load_geometry_provenance(payload, require_base=False)
+            missing, unexpected = self.mot.load_state_dict(payload["mot"], strict=False)
+            allowed_missing = set()
+            if self.geometry_config is not None and checkpoint_geometry is None:
+                allowed_missing = {
+                    key for key in self.mot.state_dict() if self._is_geometry_state_key(key)
+                }
+            unallowed_missing = set(missing) - allowed_missing
+            if unallowed_missing or unexpected:
+                raise RuntimeError(
+                    "FastWAM checkpoint architecture mismatch: "
+                    f"missing={sorted(unallowed_missing)[:20]}, unexpected={sorted(unexpected)[:20]}"
+                )
+            if self.geometry_config is not None and checkpoint_geometry is None:
+                from fastwam.datasets.geometry_provenance import file_digest
+
+                self.set_base_checkpoint_provenance(file_digest(path))
         elif "dit" in payload:
             logger.warning("Loading legacy `dit` checkpoint into video expert only.")
             self.video_expert.load_state_dict(payload["dit"], strict=False)

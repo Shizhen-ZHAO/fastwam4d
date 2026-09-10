@@ -35,27 +35,17 @@ def load_paths(path: str) -> dict:
 
 
 def geometry_config(paths: dict, *, device: str | None = None) -> dict:
-    return {
-        "target": "vae_latent",
-        "train_mode": "adapters",
-        "num_views": 2,
-        "history_length": 8,
-        "memory_dim": 512,
-        "inner_dim": 512,
-        "heads": 8,
-        "temporal_layers": 2,
-        "same_view_only": True,
-        "extractor": {
-            "repo_path": paths["track4world_repo"],
-            "checkpoint_path": paths["track4world_checkpoint"],
-            "da3_path": paths["da3_model"],
-            "device": device or paths["geometry_device"],
-            "image_size": 256,
-            "grid_size": 8,
-            "iters": 4,
-            "confidence_threshold": 0.25,
-        },
-    }
+    # Extraction and model training must never maintain duplicate geometry
+    # hyperparameters. Resolve the exact model config against this machine's
+    # path file, then optionally override only the extraction device.
+    model_config = OmegaConf.load(REPO_ROOT / "configs/model/fastwam_geometry.yaml")
+    root = OmegaConf.create({"paths": paths, "model": model_config})
+    config = OmegaConf.to_container(root.model.geometry, resolve=True)
+    if not isinstance(config, dict):
+        raise ValueError("model.geometry must resolve to a mapping")
+    if device is not None:
+        config["extractor"]["device"] = device
+    return config
 
 
 def path_rows(paths: dict):
@@ -104,6 +94,15 @@ def validate_paths(paths: dict, *, cache_required: bool = False):
     for key in directories:
         if not Path(paths[key]).expanduser().is_dir():
             failures.append(f"{key} is not a directory: {paths[key]}")
+    track4world_root = Path(paths["track4world_repo"]).expanduser()
+    for relative in (
+        "track4world/nets/model.py",
+        "track4world/nets/external/depth_anything_3/api.py",
+        "track4world/nets/external/pi3/models/pi3.py",
+        "utils3d/__init__.py",
+    ):
+        if not (track4world_root / relative).is_file():
+            failures.append(f"track4world_repo missing {relative}: {track4world_root}")
     for index, root in enumerate(paths["train_datasets"]):
         root = Path(root).expanduser()
         for relative in ("meta/info.json", "meta/episodes.jsonl", "data", "videos"):
@@ -118,8 +117,12 @@ def validate_paths(paths: dict, *, cache_required: bool = False):
 def build_history(paths: dict):
     from fastwam.datasets.libero_geometry import LeRobotGeometryHistoryDataset
 
+    config = geometry_config(paths)
     return LeRobotGeometryHistoryDataset(
-        paths["train_datasets"], history_length=8, history_stride=1, image_size=256
+        paths["train_datasets"],
+        history_length=config["history_length"],
+        history_stride=config["history_stride"],
+        image_size=config["extractor"]["image_size"],
     )
 
 
@@ -146,11 +149,38 @@ def selected_indices(length: int, args) -> range:
 
 def command_doctor(paths: dict, args):
     validate_paths(paths, cache_required=args.require_cache)
+    repo = Path(paths["track4world_repo"]).expanduser().resolve()
+    if str(repo) not in sys.path:
+        sys.path.insert(0, str(repo))
+    try:
+        import utils3d
+        from track4world.nets import model as track4world_model
+        from fastwam.models.wan22.track4world_online import require_module_origin
+
+        require_module_origin(track4world_model, repo / "track4world/nets/model.py")
+        require_module_origin(utils3d, repo / "utils3d/__init__.py")
+    except Exception as exc:
+        raise RuntimeError(
+            "Track4World Python import preflight failed. Complete its utils3d/Pi3 setup "
+            "and install runtime dependencies in the FastWAM environment."
+        ) from exc
     history = build_history(paths)
     totals = []
     for root, dataset in zip(paths["train_datasets"], history.dataset._datasets):
         totals.append({"root": root, "frames": len(dataset), "episodes": dataset.meta.total_episodes})
-    print(json.dumps({"status": "ok", "fps": history.fps, "total_frames": len(history), "datasets": totals}, indent=2))
+    expected_fps = float(geometry_config(paths)["history_fps"])
+    if history.fps != expected_fps:
+        raise ValueError(
+            f"Geometry history_fps={expected_fps} but LeRobot data fps={history.fps}"
+        )
+    print(json.dumps({
+        "status": "ok",
+        "fps": history.fps,
+        "total_frames": len(history),
+        "track4world_model": str(Path(track4world_model.__file__).resolve()),
+        "utils3d": str(Path(utils3d.__file__).resolve()),
+        "datasets": totals,
+    }, indent=2))
 
 
 def command_extract(paths: dict, args):
@@ -162,6 +192,7 @@ def command_extract(paths: dict, args):
     from fastwam.datasets.geometry_cache import LeRobotGeometryCache
     from fastwam.models.wan22.track4world_online import OnlineTrack4WorldExtractor
 
+    print("Fingerprinting dataset/video bytes, model weights and extraction code for cache v2...", flush=True)
     cache = LeRobotGeometryCache(paths["geometry_cache"], history, config, create=True)
     indices = selected_indices(len(history), args)
     extractor = OnlineTrack4WorldExtractor(**config["extractor"])
@@ -210,13 +241,17 @@ def command_verify(paths: dict, args):
     history = build_history(paths)
     from fastwam.datasets.geometry_cache import LeRobotGeometryCache
 
-    cache = LeRobotGeometryCache(paths["geometry_cache"], history, geometry_config(paths), create=False)
+    config = geometry_config(paths)
+    cache = LeRobotGeometryCache(paths["geometry_cache"], history, config, create=False)
     indices = selected_indices(len(history), args)
     checked = 0
     for index in indices:
         raw = cache.read(index)
         identity = history.metadata(index)
-        if raw["scene"].shape[:2] != (2, 64) or raw["track"].shape[:3] != (2, 8, 64):
+        points = int(config["extractor"]["grid_size"]) ** 2
+        if raw["scene"].shape[:2] != (config["num_views"], points) or raw["track"].shape[:3] != (
+            config["num_views"], config["history_length"], points
+        ):
             raise ValueError(f"Unexpected cached tensor shapes at index={index}")
         if identity["history_frame_indices"][-1] != identity["frame_index"]:
             raise ValueError(f"History does not end at current frame for index={index}")
@@ -237,6 +272,86 @@ def command_coverage(paths: dict, args):
         raise SystemExit(2)
 
 
+def command_parity(paths: dict, args):
+    """Re-extract selected RGB histories and compare with their offline cache."""
+    if args.indices is None and args.count is None:
+        raise ValueError("parity requires --indices or --count; full-dataset parity is expensive")
+    validate_paths(paths, cache_required=True)
+    if not torch.cuda.is_available():
+        raise RuntimeError("Track4World parity validation requires CUDA")
+    history = build_history(paths)
+    config = geometry_config(paths, device=args.device)
+    from fastwam.datasets.geometry_cache import LeRobotGeometryCache
+    from fastwam.models.wan22.track4world_online import OnlineTrack4WorldExtractor
+
+    cache = LeRobotGeometryCache(paths["geometry_cache"], history, config, create=False)
+    indices = selected_indices(len(history), args)
+    extractor = OnlineTrack4WorldExtractor(**config["extractor"])
+    report = {}
+    failures = []
+    try:
+        for index in indices:
+            sample = history[index]
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                online = extractor(
+                    sample["history_images"].unsqueeze(0),
+                    sample["history_timestamps"].unsqueeze(0),
+                    sample["history_valid"].unsqueeze(0),
+                    output_device="cpu",
+                )
+            online = {key: value[0] for key, value in online.items()}
+            offline = cache.read(index)
+            for key in sorted(offline):
+                actual, expected = online[key], offline[key]
+                key_report = report.setdefault(
+                    key,
+                    {
+                        "max_mask_flips": 0,
+                        "max_relative_rmse": 0.0,
+                        "min_cosine": 1.0,
+                    },
+                )
+                if actual.dtype == torch.bool:
+                    flips = int((actual != expected).sum())
+                    key_report["max_mask_flips"] = max(key_report["max_mask_flips"], flips)
+                    if flips:
+                        failures.append(f"index={index} key={key} mask_flips={flips}")
+                    continue
+                actual = actual.float().flatten()
+                expected = expected.float().flatten()
+                if not torch.isfinite(actual).all() or not torch.isfinite(expected).all():
+                    failures.append(f"index={index} key={key} contains non-finite values")
+                    continue
+                rmse = (actual - expected).square().mean().sqrt()
+                reference_rms = expected.square().mean().sqrt()
+                relative_rmse = float(rmse / reference_rms.clamp_min(1e-12))
+                norm_product = actual.square().sum().sqrt() * expected.square().sum().sqrt()
+                cosine = 1.0 if norm_product <= 1e-12 else float((actual @ expected) / norm_product)
+                key_report["max_relative_rmse"] = max(
+                    key_report["max_relative_rmse"], relative_rmse
+                )
+                key_report["min_cosine"] = min(key_report["min_cosine"], cosine)
+                if relative_rmse > args.max_relative_rmse or cosine < args.min_cosine:
+                    failures.append(
+                        f"index={index} key={key} relative_rmse={relative_rmse:.6g} "
+                        f"cosine={cosine:.9f}"
+                    )
+            print(f"parity_checked index={index}", flush=True)
+    finally:
+        extractor.close()
+    result = {
+        "status": "ok" if not failures else "failed",
+        "checked": len(indices),
+        "max_relative_rmse_limit": args.max_relative_rmse,
+        "min_cosine_limit": args.min_cosine,
+        "features": report,
+        "failures": failures,
+    }
+    print(json.dumps(result, indent=2))
+    if failures:
+        raise SystemExit(3)
+
+
 def make_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--paths", default=str(REPO_ROOT / "configs/paths/libero_track4world_local.yaml"))
@@ -245,7 +360,7 @@ def make_parser():
     doctor.add_argument("--require-cache", action="store_true")
     coverage = subparsers.add_parser("coverage")
     coverage.add_argument("--require-complete", action="store_true")
-    for name in ("extract", "verify"):
+    for name in ("extract", "verify", "parity"):
         command = subparsers.add_parser(name)
         command.add_argument("--start", type=int, default=0)
         command.add_argument("--count", type=int)
@@ -256,6 +371,10 @@ def make_parser():
     extract.add_argument("--device")
     extract.add_argument("--log-every", type=int, default=10)
     extract.add_argument("--verify-existing", action="store_true")
+    parity = subparsers.choices["parity"]
+    parity.add_argument("--device")
+    parity.add_argument("--max-relative-rmse", type=float, default=5e-3)
+    parity.add_argument("--min-cosine", type=float, default=0.999)
     return parser
 
 
@@ -272,6 +391,7 @@ def main():
         "extract": command_extract,
         "verify": command_verify,
         "coverage": command_coverage,
+        "parity": command_parity,
     }[args.command]
     command(paths, args)
 

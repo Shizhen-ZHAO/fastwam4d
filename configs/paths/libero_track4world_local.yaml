@@ -17,10 +17,10 @@ da3_model: /mnt/homes/zhaoshizhen/lf/Track4World/checkpoints/DA3NESTED-GIANT-LAR
 track4world_extra_pythonpath: /mnt/homes/zhaoshizhen/lf/.deps/fastwam_track4world
 
 libero_repo: /home/zhaoshizhen/lf/third_party/libero_base/repos/LIBERO
-geometry_cache: /home/zhaoshizhen/lf/repos_new/FastWAM/feature_cache/libero_track4world_v1
+geometry_cache: /home/zhaoshizhen/lf/repos_new/FastWAM/feature_cache/libero_track4world_v2
 output_root: /home/zhaoshizhen/lf/repos_new/FastWAM/outputs/libero_track4world
 
-# Local smoke test: FastWAM on cuda:0 and Track4World on cuda:1. On a cluster,
-# choose a device visible to each process or use the offline training config.
+# Local smoke test: FastWAM on cuda:0 and Track4World on cuda:1. Multi-GPU
+# training must use `same`, including offline training's online validation.
 geometry_device: cuda:1
 hf_endpoint: https://hf-mirror.com

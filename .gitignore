@@ -17,6 +17,7 @@ tests/
 tests/*
 !tests/test_vae_geometry.py
 !tests/test_geometry_data_contract.py
+!tests/test_geometry_regressions.py
 
 # ai coding
 .codex/

@@ -6,13 +6,24 @@ may live on a separate GPU, and is not copied into policy checkpoints.
 """
 
 import math
-import os
 from pathlib import Path
 import sys
 import time
 
 import torch
 from torch.nn import functional as F
+
+
+def require_module_origin(module, expected_file):
+    """Reject a stale/imported Track4World package from a different checkout."""
+    actual = getattr(module, "__file__", None)
+    expected = Path(expected_file).resolve()
+    if actual is None or Path(actual).resolve() != expected:
+        raise RuntimeError(
+            "Imported Track4World from the wrong checkout: "
+            f"expected={expected}, actual={actual}. Start a fresh Python process and "
+            "put the configured track4world_repo first on sys.path."
+        )
 
 
 def transform_endpoints_to_current_camera(endpoints, poses):
@@ -42,10 +53,15 @@ class OnlineTrack4WorldExtractor:
                      da3 / "config.json", da3 / "model.safetensors"):
             if not path.is_file():
                 raise FileNotFoundError(f"Online geometry requires local file: {path}")
-        sys.path.insert(0, str(repo))
-        os.environ["TRACK4WORLD_DA3_PATH"] = str(da3)
-        from track4world.nets.model import Track4World
-        model = Track4World(use_model="depthanythingv3", use_3d=True, seqlen=16)
+        if str(repo) not in sys.path:
+            sys.path.insert(0, str(repo))
+        from track4world.nets import model as track4world_model
+        from .track4world_compat import local_da3_loading
+
+        require_module_origin(track4world_model, repo / "track4world/nets/model.py")
+
+        with local_da3_loading(track4world_model, da3):
+            model = track4world_model.Track4World(use_model="depthanythingv3", use_3d=True, seqlen=16)
         state = torch.load(checkpoint, map_location="cpu", weights_only=True, mmap=True)
         if "model" in state and isinstance(state["model"], dict):
             state = state["model"]
@@ -182,11 +198,16 @@ class OnlineTrack4WorldExtractor:
             raise ValueError("History must be nonempty with finite timestamps")
         if (timestamps > 1e-6).any() or (timestamps[:, -1].abs() > 1e-6).any() or not valid[:, -1].all():
             raise ValueError("History must end at current observation and contain no future timestamps")
+        if (valid[:, :-1].bool() & ~valid[:, 1:].bool()).any():
+            raise ValueError("history_valid must be one invalid prefix followed by valid history")
         if not torch.isfinite(images).all() or images.min() < 0 or images.max() > 1.001:
             raise ValueError("history_images must be finite RGB in [0,1]")
         start = time.monotonic()
         batch = []
-        with torch.cuda.device(self.device):
+        # An outer trainer autocast must not change camera transforms or motion
+        # arithmetic relative to the standalone offline extractor. The upstream
+        # network calls explicitly opt into fp16 inside _extract_view.
+        with torch.cuda.device(self.device), torch.autocast("cuda", enabled=False):
             for bi in range(b):
                 view_results = []
                 keep = valid[bi].bool()

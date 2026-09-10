@@ -13,6 +13,8 @@ geometry:
   train_mode: adapters
   num_views: 2
   history_length: 8
+  history_stride: 1
+  history_fps: 20.0
   memory_dim: 512
   inner_dim: 512
   heads: 8
