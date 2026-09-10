@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - override /data: libero_2cam_geometry_online
+  - override /model: fastwam_geometry
+  - _self_
+
+batch_size: 1
+num_workers: 0
+learning_rate: 1.0e-4
+num_epochs: 10
+max_steps: null
+log_every: 10
+save_every: 2000
+eval_every: 200
+eval_num_inference_steps: 10
+gradient_accumulation_steps: 1
+weight_decay: 1.0e-2
+initial_checkpoint: ${paths.fastwam_checkpoint}
+resume: null
+output_dir: ${paths.output_root}/online

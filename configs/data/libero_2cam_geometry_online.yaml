@@ -1,0 +1,7 @@
+defaults:
+  - libero_2cam_geometry_offline
+  - _self_
+
+train:
+  geometry_mode: online
+  geometry_cache_root: null

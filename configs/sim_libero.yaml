@@ -17,6 +17,9 @@ EVALUATION:
   task_suite_name: libero_spatial
   task_id: 0
   num_trials: 50
+  # null uses the benchmark default (400/700). A small value is useful only
+  # for an integration smoke test and is not a benchmark result.
+  max_steps: null
   output_dir: ./evaluate_results/libero/${hydra:runtime.choices.task}/${now:%Y%m%d_%H%M%S}
 
   # Runtime behavior
@@ -39,6 +42,7 @@ EVALUATION:
 
   # Optional external inputs
   dataset_stats_path: null
+  geometry_adapter: null
   device: cuda
 
 MULTIRUN:

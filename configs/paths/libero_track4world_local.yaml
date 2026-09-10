@@ -1,0 +1,26 @@
+# All machine-specific paths live here. Copy this file for a new cluster and
+# change values only in the copied path config.
+train_datasets:
+  - /mnt/homes/zhaoshizhen/lf/new_repos/4DWAM/FastWAM/data/libero_mujoco3.3.2/libero_spatial_no_noops_lerobot
+  - /mnt/homes/zhaoshizhen/lf/new_repos/4DWAM/FastWAM/data/libero_mujoco3.3.2/libero_object_no_noops_lerobot
+  - /mnt/homes/zhaoshizhen/lf/new_repos/4DWAM/FastWAM/data/libero_mujoco3.3.2/libero_goal_no_noops_lerobot
+  - /mnt/homes/zhaoshizhen/lf/new_repos/4DWAM/FastWAM/data/libero_mujoco3.3.2/libero_10_no_noops_lerobot
+text_embedding_cache: /mnt/homes/zhaoshizhen/lf/new_repos/4DWAM/FastWAM/data/text_embeds_cache/libero
+
+fastwam_checkpoint: /mnt/homes/zhaoshizhen/checkpoints/fastwam/libero_uncond_2cam224.pt
+dataset_stats: /mnt/homes/zhaoshizhen/checkpoints/fastwam/libero_uncond_2cam224_dataset_stats.json
+model_base: /mnt/homes/zhaoshizhen/checkpoints/fastwam/model_base
+
+track4world_repo: /mnt/homes/zhaoshizhen/lf/Track4World
+track4world_checkpoint: /mnt/homes/zhaoshizhen/lf/Track4World/checkpoints/track4world_da3.pth
+da3_model: /mnt/homes/zhaoshizhen/lf/Track4World/checkpoints/DA3NESTED-GIANT-LARGE-1.1
+track4world_extra_pythonpath: /mnt/homes/zhaoshizhen/lf/.deps/fastwam_track4world
+
+libero_repo: /home/zhaoshizhen/lf/third_party/libero_base/repos/LIBERO
+geometry_cache: /home/zhaoshizhen/lf/repos_new/FastWAM/feature_cache/libero_track4world_v1
+output_root: /home/zhaoshizhen/lf/repos_new/FastWAM/outputs/libero_track4world
+
+# Local smoke test: FastWAM on cuda:0 and Track4World on cuda:1. On a cluster,
+# choose a device visible to each process or use the offline training config.
+geometry_device: cuda:1
+hf_endpoint: https://hf-mirror.com

@@ -1,0 +1,42 @@
+defaults:
+  - libero_2cam
+  - _self_
+
+train:
+  _target_: fastwam.datasets.geometry_cache.GeometryRobotVideoDataset
+  dataset_dirs: ${paths.train_datasets}
+  text_embedding_cache_dir: ${paths.text_embedding_cache}
+  pretrained_norm_stats: ${paths.dataset_stats}
+  geometry_mode: offline
+  geometry_cache_root: ${paths.geometry_cache}
+  geometry_config: ${model.geometry}
+  geometry_history_length: ${model.geometry.history_length}
+  geometry_history_stride: 1
+  geometry_image_size: ${model.geometry.extractor.image_size}
+  geometry_require_complete_cache: true
+
+# Validation deliberately extracts online. This verifies the same path used by
+# simulator inference instead of accidentally validating from cached features.
+val:
+  _target_: fastwam.datasets.geometry_cache.GeometryRobotVideoDataset
+  dataset_dirs: ${paths.train_datasets}
+  shape_meta: ${data.train.shape_meta}
+  num_frames: ${data.train.num_frames}
+  global_sample_stride: ${data.train.global_sample_stride}
+  action_video_freq_ratio: ${data.train.action_video_freq_ratio}
+  video_size: ${data.train.video_size}
+  camera_key: ${data.train.camera_key}
+  val_set_proportion: 0.0
+  is_training_set: true
+  skip_padding_as_possible: ${data.train.skip_padding_as_possible}
+  concat_multi_camera: ${data.train.concat_multi_camera}
+  processor: ${data.train.processor}
+  text_embedding_cache_dir: ${paths.text_embedding_cache}
+  use_text_embed_cache: true
+  context_len: ${data.train.context_len}
+  pretrained_norm_stats: ${paths.dataset_stats}
+  geometry_mode: online
+  geometry_config: ${model.geometry}
+  geometry_history_length: ${model.geometry.history_length}
+  geometry_history_stride: 1
+  geometry_image_size: ${model.geometry.extractor.image_size}

@@ -1,0 +1,29 @@
+defaults:
+  - fastwam
+  - _self_
+
+model_base_path: ${paths.model_base}
+track4world_extra_pythonpath: ${paths.track4world_extra_pythonpath}
+hf_endpoint: ${paths.hf_endpoint}
+load_text_encoder: false
+skip_dit_load_from_pretrain: true
+action_dit_pretrained_path: null
+geometry:
+  target: vae_latent
+  train_mode: adapters
+  num_views: 2
+  history_length: 8
+  memory_dim: 512
+  inner_dim: 512
+  heads: 8
+  temporal_layers: 2
+  same_view_only: true
+  extractor:
+    repo_path: ${paths.track4world_repo}
+    checkpoint_path: ${paths.track4world_checkpoint}
+    da3_path: ${paths.da3_model}
+    device: ${paths.geometry_device}
+    image_size: 256
+    grid_size: 8
+    iters: 4
+    confidence_threshold: 0.25

@@ -65,7 +65,8 @@ class Wan22Trainer:
         logger.info(
             "Accelerate training: distributed_type=%s zero_stage=%s world_size=%d process_index=%d cfg_mixed_precision=%s accelerator_mixed_precision=%s grad_accum=%d grad_clip=%.4f",
             self.accelerator.distributed_type,
-            self.accelerator.state.deepspeed_plugin.deepspeed_config.get("zero_optimization", {}).get("stage", "unknown"),
+            (self.accelerator.state.deepspeed_plugin.deepspeed_config.get("zero_optimization", {}).get("stage", "unknown")
+             if self.accelerator.state.deepspeed_plugin is not None else "disabled"),
             self.accelerator.num_processes,
             self.accelerator.process_index,
             self.mixed_precision,
@@ -82,10 +83,9 @@ class Wan22Trainer:
         # Freeze non-trainable modules before optimizer/deepspeed initialization.
         # This keeps DiT (+ optional proprio encoder) as trainable when ZeRO builds optimizer state.
         self._apply_dit_only_train_mode(self.model)
-        trainable_params = list(self.model.dit.parameters())
-        proprio_encoder = getattr(self.model, "proprio_encoder", None)
-        if proprio_encoder is not None:
-            trainable_params.extend(list(proprio_encoder.parameters()))
+        trainable_params = [p for p in self.model.parameters() if p.requires_grad]
+        if not trainable_params:
+            raise RuntimeError("Training configuration produced no trainable parameters")
         self.optimizer = torch.optim.AdamW(
             trainable_params,
             lr=self.learning_rate,
@@ -143,6 +143,7 @@ class Wan22Trainer:
         self.model, self.optimizer, self.train_loader, self.scheduler = self.accelerator.prepare(
             self.model, self.optimizer, self.train_loader, self.scheduler
         )
+        self._register_geometry_state_hooks()
         self.optimizer.zero_grad(set_to_none=True)
         self.wandb_run = None
         self._init_wandb()
@@ -175,6 +176,33 @@ class Wan22Trainer:
             self.cfg.wandb.project,
             self.cfg.wandb.name,
         )
+
+    def _register_geometry_state_hooks(self):
+        model = self._unwrap_model()
+        if getattr(model, "geometry_config", None) is None:
+            return
+
+        def save_adapter_only(models, weights, output_dir):
+            output_dir = Path(output_dir)
+            if self.accelerator.is_main_process:
+                output_dir.mkdir(parents=True, exist_ok=True)
+                self._unwrap_model().save_geometry_adapter(
+                    output_dir / "geometry_adapter.pt",
+                    step=int(self.global_step),
+                )
+            self.accelerator.wait_for_everyone()
+            models.clear()
+            weights.clear()
+
+        def load_adapter_only(models, input_dir):
+            adapter_path = Path(input_dir) / "geometry_adapter.pt"
+            if not adapter_path.is_file():
+                raise FileNotFoundError(f"Missing geometry adapter training state: {adapter_path}")
+            self._unwrap_model().load_geometry_adapter(adapter_path)
+            models.clear()
+
+        self._geometry_save_hook = self.accelerator.register_save_state_pre_hook(save_adapter_only)
+        self._geometry_load_hook = self.accelerator.register_load_state_pre_hook(load_adapter_only)
 
     def _wandb_log(self, payload: dict):
         if self.wandb_run is None:
@@ -286,6 +314,14 @@ class Wan22Trainer:
         return f"{eta_h:02d}:{eta_m:02d}:{eta_s:02d}", steps_per_sec
 
     def _resume_or_load_checkpoint(self):
+        initial_checkpoint = self.cfg.get("initial_checkpoint")
+        if initial_checkpoint:
+            initial_path = Path(str(initial_checkpoint))
+            if not initial_path.is_file():
+                raise FileNotFoundError(f"Initial checkpoint not found: {initial_path}")
+            logger.info("Loading immutable initial checkpoint: %s", initial_path)
+            self._unwrap_model().load_checkpoint(str(initial_path), optimizer=None)
+
         resume = self.resume
         if not resume:
             return
@@ -296,18 +332,34 @@ class Wan22Trainer:
             return
         if not resume_path.exists():
             raise FileNotFoundError(f"Resume checkpoint not found: {resume}")
-        logger.info("Loading weight checkpoint only: %s", resume)
-        self.accelerator.unwrap_model(self.model).load_checkpoint(str(resume_path), optimizer=None)
-        logger.warning("Loaded .pt weights only; optimizer/scheduler/step were not restored under ZeRO2.")
+        logger.info("Loading resume weight checkpoint: %s", resume)
+        self._unwrap_model().load_checkpoint(str(resume_path), optimizer=None)
+        logger.warning("Loaded weights only; optimizer/scheduler/global step were not restored.")
+
+    def _unwrap_model(self):
+        # accelerate imports DeepSpeed from unwrap_model even for plain DDP.
+        # Every supported wrapper exposes the wrapped policy as `.module`.
+        model = self.model
+        seen = set()
+        while hasattr(model, "module") and id(model) not in seen:
+            seen.add(id(model))
+            model = model.module
+        return model
 
     def _set_dit_only_train_mode(self):
         # Match DiffSynth's freeze_except("dit"): only DiT stays trainable/in-train-mode.
-        logger.info("Setting DiT to train mode and freezing other model components.")
-        model = self.accelerator.unwrap_model(self.model)
+        model = self._unwrap_model()
+        if getattr(model, "geometry_config", None) is not None:
+            logger.info("Setting geometry adapters to train mode and freezing FastWAM.")
+        else:
+            logger.info("Setting DiT to train mode and freezing other model components.")
         self._apply_dit_only_train_mode(model)
 
     @staticmethod
     def _apply_dit_only_train_mode(model):
+        if getattr(model, "geometry_config", None) is not None:
+            model.configure_geometry_train_mode()
+            return
         model.eval()
         model.requires_grad_(False)
         model.dit.train()
@@ -386,7 +438,7 @@ class Wan22Trainer:
                     f"`context/context_mask` must be [B,L,D]/[B,L], got {tuple(context.shape)} and {tuple(context_mask.shape)}"
                 )
 
-        return {
+        result = {
             "video": video,
             "prompt": prompt,
             "action": action,
@@ -395,13 +447,24 @@ class Wan22Trainer:
             "context_mask": context_mask,
             "action_horizon": action_horizon,
         }
+        if "geometry_raw" in sample:
+            result["geometry_raw"] = {
+                key: value.unsqueeze(0) if value.ndim in (0, 1, 2, 3, 4) else value
+                for key, value in sample["geometry_raw"].items()
+            }
+        elif "history_images" in sample:
+            for key in ("history_images", "history_timestamps", "history_valid"):
+                value = sample[key]
+                expected_ndim = {"history_images": 6, "history_timestamps": 2, "history_valid": 2}[key]
+                result[key] = value.unsqueeze(0) if value.ndim == expected_ndim - 1 else value
+        return result
 
     @torch.no_grad()
     def evaluate(self):
         if self.val_dataset is None:
             return None
 
-        model = self.accelerator.unwrap_model(self.model)
+        model = self._unwrap_model()
         was_dit_training = model.dit.training
         model.eval()
 
@@ -435,6 +498,16 @@ class Wan22Trainer:
             "seed": 42,
             "tiled": False,
         }
+        if "geometry_raw" in sample:
+            raise ValueError(
+                "Geometry evaluation inference must use an online-history validation dataset"
+            )
+        elif "history_images" in sample:
+            infer_kwargs.update(
+                history_images=sample["history_images"],
+                history_timestamps=sample["history_timestamps"],
+                history_valid=sample["history_valid"],
+            )
         if sample["context"] is not None:
             infer_kwargs["prompt"] = None
             infer_kwargs["context"] = sample["context"][0]
@@ -588,9 +661,12 @@ class Wan22Trainer:
         return result
 
     def _save_weights_checkpoint(self, step_tag: str):
-        model = self.accelerator.unwrap_model(self.model)
+        model = self._unwrap_model()
         ckpt_path = os.path.join(self.weights_dir, f"{step_tag}.pt")
-        model.save_checkpoint(ckpt_path, optimizer=None, step=self.global_step)
+        if getattr(model, "geometry_config", None) is not None:
+            model.save_geometry_adapter(ckpt_path, step=self.global_step)
+        else:
+            model.save_checkpoint(ckpt_path, optimizer=None, step=self.global_step)
         return ckpt_path
 
     def _save_trainer_state(self, state_path: str):
@@ -669,7 +745,7 @@ class Wan22Trainer:
     def train(self):
         self._set_dit_only_train_mode()
 
-        unwrapped_model = self.accelerator.unwrap_model(self.model)
+        unwrapped_model = self._unwrap_model()
 
         if self.max_steps is None:
             raise ValueError("`max_steps` must be set before entering the while-step training loop.")
@@ -691,7 +767,7 @@ class Wan22Trainer:
                 continue
 
             with self.accelerator.accumulate(self.model):
-                train_model = self.model if hasattr(self.model, "training_loss") else self.accelerator.unwrap_model(self.model)
+                train_model = self.model if hasattr(self.model, "training_loss") else self._unwrap_model()
 
                 with self.accelerator.autocast():
                     loss, loss_dict = train_model.training_loss(sample)
@@ -713,7 +789,9 @@ class Wan22Trainer:
                         global_loss_metrics[key] = float(
                             self.accelerator.gather(metric_tensor).mean().item()
                         )
-                    grad_norm_tensor = torch.tensor(grad_norm, device=loss.device, dtype=torch.float32)
+                    grad_norm_tensor = torch.as_tensor(grad_norm).detach().to(
+                        device=loss.device, dtype=torch.float32
+                    )
                     global_grad_norm = float(self.accelerator.gather(grad_norm_tensor).mean().item())
 
                     current_lr = float(self.optimizer.param_groups[0]["lr"])

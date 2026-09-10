@@ -13,6 +13,10 @@ Official codebase for **Fast-WAM: Do World Action Models Need Test-time Future I
 
 This repository contains the training and evaluation code for FastWAM on LIBERO / RoboTwin.
 
+Track4World geometry integration (offline extraction/training and online
+LIBERO inference) is documented in
+[docs/libero_track4world.md](docs/libero_track4world.md).
+
 ## What's New
 
 FastWAM is now faster, better suited to large-scale datasets, and more flexible

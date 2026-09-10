@@ -1,6 +1,7 @@
 
 # Misc
 outputs/
+feature_cache/
 checkpoints
 data/*
 apex/
@@ -12,6 +13,10 @@ evaluate_results/
 
 volc/
 tests/
+!tests/
+tests/*
+!tests/test_vae_geometry.py
+!tests/test_geometry_data_contract.py
 
 # ai coding
 .codex/

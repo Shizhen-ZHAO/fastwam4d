@@ -2,6 +2,7 @@
 
 defaults:
   - _self_
+  - paths: null
   - data: null
   - model: null
   - task: null
@@ -30,6 +31,7 @@ seed: 42
 max_grad_norm: 1.0
 weight_decay: 0.0
 resume: null
+initial_checkpoint: null
 
 # wandb
 wandb:

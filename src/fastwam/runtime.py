@@ -2,6 +2,7 @@ import logging
 import os
 import inspect
 from pathlib import Path
+import sys
 
 import torch
 from hydra.utils import instantiate
@@ -91,7 +92,24 @@ def create_fastwam(
     redirect_common_files: bool = True,
     model_dtype: torch.dtype = torch.bfloat16,
     device: str = "cuda",
+    geometry=None,
+    model_base_path: str | None = None,
+    track4world_extra_pythonpath: str | None = None,
+    hf_endpoint: str | None = None,
 ):
+    if hf_endpoint is not None:
+        os.environ["HF_ENDPOINT"] = str(hf_endpoint)
+    if track4world_extra_pythonpath is not None:
+        extra_path = str(Path(track4world_extra_pythonpath).expanduser().resolve())
+        if not Path(extra_path).is_dir():
+            raise FileNotFoundError(f"Missing Track4World dependency directory: {extra_path}")
+        if extra_path not in sys.path:
+            sys.path.insert(0, extra_path)
+    if model_base_path is not None:
+        model_base_path = str(Path(model_base_path).expanduser().resolve())
+        if not Path(model_base_path).is_dir():
+            raise FileNotFoundError(f"Missing local model base: {model_base_path}")
+        os.environ["DIFFSYNTH_MODEL_BASE_PATH"] = model_base_path
     from .models.wan22.fastwam import FastWAM
 
     if isinstance(video_dit_config, DictConfig):
@@ -134,7 +152,7 @@ def create_fastwam(
     if not isinstance(loss, dict):
         raise ValueError(f"`loss` must be dict-like, got {type(loss)}")
 
-    return FastWAM.from_wan22_pretrained(
+    model = FastWAM.from_wan22_pretrained(
         device=device,
         torch_dtype=model_dtype,
         model_id=model_id,
@@ -158,6 +176,11 @@ def create_fastwam(
         loss_lambda_action=float(loss.get("lambda_action", 1.0)),
         compile_training_denoise=bool(compile_training_denoise),
     )
+    if geometry is not None:
+        if isinstance(geometry, DictConfig):
+            geometry = OmegaConf.to_container(geometry, resolve=True)
+        model.enable_geometry(geometry)
+    return model
 
 
 def create_fastwam_joint(

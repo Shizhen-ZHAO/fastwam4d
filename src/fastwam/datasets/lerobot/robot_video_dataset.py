@@ -234,6 +234,10 @@ class RobotVideoDataset(torch.utils.data.Dataset):
             "action": action,
             "proprio": proprio,
             "prompt": instruction,
+            # Preserve the index that was actually decoded. This may differ
+            # from the requested index after the upstream retry fallback and
+            # is required to bind the matching offline geometry window.
+            "sample_index": int(sample["idx"]),
             "image_is_pad": image_is_pad,
             "action_is_pad": sample["action_is_pad"],
             "proprio_is_pad": sample["proprio_is_pad"],
@@ -258,7 +262,7 @@ class RobotVideoDataset(torch.utils.data.Dataset):
                 f"Missing text embedding cache: {cache_path}. "
                 "Run scripts/precompute_text_embeds.py first."
             )
-        payload = torch.load(cache_path, map_location="cpu")
+        payload = torch.load(cache_path, map_location="cpu", weights_only=True)
         context = payload["context"]
         context_mask = payload["mask"].bool()
         if context.ndim != 2:
