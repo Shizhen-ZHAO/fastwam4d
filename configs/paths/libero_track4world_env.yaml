@@ -1,0 +1,25 @@
+# Machine-specific paths supplied by the launch scripts. Keep this file
+# machine independent; edit the path block at the top of each launcher or
+# export the corresponding environment variables before invoking it.
+train_datasets:
+  - ${oc.env:FASTWAM_LIBERO_SPATIAL_ROOT}
+  - ${oc.env:FASTWAM_LIBERO_OBJECT_ROOT}
+  - ${oc.env:FASTWAM_LIBERO_GOAL_ROOT}
+  - ${oc.env:FASTWAM_LIBERO_10_ROOT}
+text_embedding_cache: ${oc.env:FASTWAM_TEXT_EMBEDDING_CACHE}
+
+fastwam_checkpoint: ${oc.env:FASTWAM_BASE_CHECKPOINT}
+dataset_stats: ${oc.env:FASTWAM_DATASET_STATS}
+model_base: ${oc.env:FASTWAM_MODEL_BASE}
+
+track4world_repo: ${oc.env:FASTWAM_TRACK4WORLD_REPO}
+track4world_checkpoint: ${oc.env:FASTWAM_TRACK4WORLD_CHECKPOINT}
+da3_model: ${oc.env:FASTWAM_DA3_MODEL}
+track4world_extra_pythonpath: ${oc.env:FASTWAM_TRACK4WORLD_EXTRA_PYTHONPATH}
+
+libero_repo: ${oc.env:FASTWAM_LIBERO_REPO}
+geometry_cache: ${oc.env:FASTWAM_GEOMETRY_CACHE}
+output_root: ${oc.env:FASTWAM_OUTPUT_ROOT}
+
+geometry_device: ${oc.env:FASTWAM_GEOMETRY_DEVICE}
+hf_endpoint: ${oc.env:HF_ENDPOINT}

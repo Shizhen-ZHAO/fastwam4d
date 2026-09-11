@@ -22,6 +22,11 @@ from libero_track4world import load_paths, print_paths, validate_paths
 def main():
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument(
+        "--manager",
+        action="store_true",
+        help="Run the official persistent multi-GPU LIBERO manager.",
+    )
+    parser.add_argument(
         "--paths",
         default=str(REPO_ROOT / "configs/paths/libero_track4world_local.yaml"),
     )
@@ -46,13 +51,22 @@ def main():
         hydra_args.append("EVALUATION.compile_action_infer=false")
 
     libero_repo = Path(paths["libero_repo"]).resolve()
-    for entry in (
+    runtime_python_paths = (
         paths["track4world_extra_pythonpath"],
         str(libero_repo),
         str(REPO_ROOT / "experiments/libero"),
-    ):
+    )
+    for entry in runtime_python_paths:
         if entry not in sys.path:
             sys.path.insert(0, entry)
+    # The official manager starts fresh worker processes, so their environment
+    # must receive the same import roots that this wrapper added to sys.path.
+    inherited_pythonpath = [
+        entry for entry in os.environ.get("PYTHONPATH", "").split(os.pathsep) if entry
+    ]
+    os.environ["PYTHONPATH"] = os.pathsep.join(
+        [*runtime_python_paths, str(REPO_ROOT), *inherited_pythonpath]
+    )
 
     # LIBERO insists on a config file. Generate it from the one machine path
     # config instead of maintaining a second set of absolute paths.
@@ -74,11 +88,13 @@ def main():
     os.environ.setdefault("HF_ENDPOINT", str(paths["hf_endpoint"]))
     os.environ["DIFFSYNTH_MODEL_BASE_PATH"] = str(paths["model_base"])
 
-    sys.argv = [str(REPO_ROOT / "experiments/libero/eval_libero_single.py"), *hydra_args]
-    runpy.run_path(
-        str(REPO_ROOT / "experiments/libero/eval_libero_single.py"),
-        run_name="__main__",
-    )
+    if args.manager:
+        entrypoint = REPO_ROOT / "experiments/libero/run_libero_manager.py"
+        print("Using official persistent multi-GPU LIBERO manager.", flush=True)
+    else:
+        entrypoint = REPO_ROOT / "experiments/libero/eval_libero_single.py"
+    sys.argv = [str(entrypoint), *hydra_args]
+    runpy.run_path(str(entrypoint), run_name="__main__")
 
 
 if __name__ == "__main__":
