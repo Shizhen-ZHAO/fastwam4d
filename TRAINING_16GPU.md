@@ -1,11 +1,12 @@
-# LIBERO：官方 FastWAM joint / unconditional，16 卡启动
+# LIBERO：官方 FastWAM joint / unconditional / IDM，16 卡启动
 
-两个入口（均不含 geometry）：
+三个入口（均不含 geometry）：
 
 - `scripts/train_libero_joint_16gpu.sh` → 官方 `libero_joint_2cam224_1e-4`。
 - `scripts/train_libero_uncond_16gpu.sh` → 官方 `libero_uncond_2cam224_1e-4`。
+- `scripts/train_libero_idm_16gpu.sh` → 官方 `libero_idm_2cam224_1e-4`，标准 IDM，不是 optional-IDM。
 
-两者依赖新增的 `scripts/train_libero_16gpu_common.sh`，迁移时三个文件都要保留。
+三个入口依赖 `scripts/train_libero_16gpu_common.sh`，迁移时四个文件都要保留。
 共用启动器参考官方 `scripts/train_zero1.sh`，使用相同的训练入口、Accelerate YAML 和
 DeepSpeed ZeRO-1 JSON，显式补充多机参数和 `standard` launcher（每节点启动一次，不使用 pdsh/SSH 自动启动）。
 没有修改官方 Python、模型结构、loss 或配置文件。
@@ -20,8 +21,8 @@ DeepSpeed ZeRO-1 JSON，显式补充多机参数和 `standard` launcher（每节
 - `TEXT_CACHE`：官方 LIBERO T5 文本缓存目录，不是几何缓存。
 - `MODEL_BASE`：Wan 初始化权重根目录。
 - `ACTION_DIT_CHECKPOINT`：插值后的 ActionDiT backbone 初始化权重。
-- `DATASET_STATS`：与训练数据和 processor 匹配的归一化 JSON；两种模型可共用。
-- `OUTPUT_DIR`：训练输出目录；多机必须共享且一致，两个实验必须分开。
+- `DATASET_STATS`：与训练数据和 processor 匹配的归一化 JSON；三种模型可共用。
+- `OUTPUT_DIR`：训练输出目录；多机必须共享且一致，不同模型的实验必须分开。
 - `RESUME_STATE`：首次训练保持 `null`；恢复时填写对应模型的完整训练 state 目录。
 
 `MODEL_BASE` 保持如下结构（与本机现有权重一致）：
@@ -45,6 +46,8 @@ ActionDiT_linear_interp_Wan22_alphascale_1024hdim.pt
 bash scripts/train_libero_joint_16gpu.sh
 # 上一个实验结束后，再运行另一个：
 bash scripts/train_libero_uncond_16gpu.sh
+# 上一个实验结束后，再运行 IDM：
+bash scripts/train_libero_idm_16gpu.sh
 ```
 
 默认每卡 batch=1，梯度累积=1，全局 batch=16；workers=2/进程。
@@ -57,9 +60,10 @@ bash scripts/train_libero_uncond_16gpu.sh
 ```bash
 DRY_RUN=1 bash scripts/train_libero_joint_16gpu.sh
 DRY_RUN=1 bash scripts/train_libero_uncond_16gpu.sh
+DRY_RUN=1 bash scripts/train_libero_idm_16gpu.sh
 ```
 
-先进行短测试的示例（两种模型都应分别测）：
+先进行短测试的示例（三种模型都应分别测）：
 
 ```bash
 MAX_STEPS=20 OUTPUT_DIR=/your/output/joint_smoke \
@@ -91,11 +95,13 @@ bash scripts/train_libero_joint_16gpu.sh
 ```
 
 unconditional 实验：两个节点均换成 `train_libero_uncond_16gpu.sh`，并使用新的、两端一致的
-`RUN_ID` 和 `OUTPUT_DIR`。端口需允许节点间通信，集群网络/NCCL 设置按当地配置。
+`RUN_ID` 和 `OUTPUT_DIR`。IDM 实验同理，两个节点均换成 `train_libero_idm_16gpu.sh`，
+并使用新的、两端一致的 `RUN_ID=idm_run01` 和 `OUTPUT_DIR=/shared/outputs/idm_run01`。
+端口需允许节点间通信，集群网络/NCCL 设置按当地配置。
 脚本不负责申请 SLURM 资源。
 
 ## 验证边界
 
-已检查 shell 语法、两种官方 Hydra 模型目标、路径参数传递、单机 16 卡和两机各 8 卡参数，
+已检查 shell 语法、三种官方 Hydra 模型目标、路径参数传递、单机 16 卡和两机各 8 卡参数，
 以及不合法 GPU 数量的拒绝逻辑。未进行 16 卡实际训练或多机通信测试。
 此前双卡官方依赖环境出现第 2 步 NaN，原因尚未确定；不能承诺增至 16 卡后消失。

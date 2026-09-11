@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Shared launcher; invoke one of the two variant scripts, not this file directly.
-TASK="${1:?Use train_libero_joint_16gpu.sh or train_libero_uncond_16gpu.sh}"
+# Shared launcher; invoke a variant script, not this file directly.
+TASK="${1:?Use train_libero_joint_16gpu.sh, train_libero_uncond_16gpu.sh or train_libero_idm_16gpu.sh}"
 shift
 for value in "${NNODES}" "${GPUS_PER_NODE}" "${NODE_RANK}" "${MASTER_PORT}"; do
   [[ "${value}" =~ ^(0|[1-9][0-9]*)$ ]] || { echo "Invalid integer: ${value}" >&2; exit 2; }
