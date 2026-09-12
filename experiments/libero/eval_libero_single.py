@@ -23,6 +23,10 @@ from tqdm import tqdm
 project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
+src_root = project_root / "src"
+if str(src_root) in sys.path:
+    sys.path.remove(str(src_root))
+sys.path.insert(0, str(src_root))
 
 from experiments.libero.libero_utils import (
     LIBERO_ENV_RESOLUTION,

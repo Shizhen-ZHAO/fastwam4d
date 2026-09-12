@@ -1,0 +1,269 @@
+{
+  "scope": "CPU float32, actual two-layer DiT/MoT/small VAE, supplied context; no pretrained T5, CUDA, compile or LIBERO",
+  "cases": [
+    {
+      "variant": "uncond",
+      "method": "infer_action",
+      "seed": 42,
+      "steps": 10,
+      "shift": null,
+      "scheduler_updates": 10,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "uncond",
+      "method": "infer_joint",
+      "seed": 42,
+      "steps": 10,
+      "shift": null,
+      "scheduler_updates": 20,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "uncond",
+      "method": "infer_action",
+      "seed": 42,
+      "steps": 4,
+      "shift": null,
+      "scheduler_updates": 4,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "uncond",
+      "method": "infer_joint",
+      "seed": 42,
+      "steps": 4,
+      "shift": null,
+      "scheduler_updates": 8,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "uncond",
+      "method": "infer_action",
+      "seed": 7,
+      "steps": 1,
+      "shift": 3.0,
+      "scheduler_updates": 1,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "uncond",
+      "method": "infer_joint",
+      "seed": 7,
+      "steps": 1,
+      "shift": 3.0,
+      "scheduler_updates": 2,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "uncond",
+      "method": "infer_action",
+      "seed": 42,
+      "steps": 20,
+      "shift": 5.0,
+      "scheduler_updates": 20,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "uncond",
+      "method": "infer_joint",
+      "seed": 42,
+      "steps": 20,
+      "shift": 5.0,
+      "scheduler_updates": 40,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "joint",
+      "method": "infer_action",
+      "seed": 42,
+      "steps": 10,
+      "shift": null,
+      "scheduler_updates": 20,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "joint",
+      "method": "infer_joint",
+      "seed": 42,
+      "steps": 10,
+      "shift": null,
+      "scheduler_updates": 20,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "joint",
+      "method": "infer_action",
+      "seed": 42,
+      "steps": 4,
+      "shift": null,
+      "scheduler_updates": 8,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "joint",
+      "method": "infer_joint",
+      "seed": 42,
+      "steps": 4,
+      "shift": null,
+      "scheduler_updates": 8,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "joint",
+      "method": "infer_action",
+      "seed": 7,
+      "steps": 1,
+      "shift": 3.0,
+      "scheduler_updates": 2,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "joint",
+      "method": "infer_joint",
+      "seed": 7,
+      "steps": 1,
+      "shift": 3.0,
+      "scheduler_updates": 2,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "joint",
+      "method": "infer_action",
+      "seed": 42,
+      "steps": 20,
+      "shift": 5.0,
+      "scheduler_updates": 40,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "joint",
+      "method": "infer_joint",
+      "seed": 42,
+      "steps": 20,
+      "shift": 5.0,
+      "scheduler_updates": 40,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "idm",
+      "method": "infer_action",
+      "seed": 42,
+      "steps": 10,
+      "shift": null,
+      "scheduler_updates": 20,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "idm",
+      "method": "infer_joint",
+      "seed": 42,
+      "steps": 10,
+      "shift": null,
+      "scheduler_updates": 20,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "idm",
+      "method": "infer_action",
+      "seed": 42,
+      "steps": 4,
+      "shift": null,
+      "scheduler_updates": 8,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "idm",
+      "method": "infer_joint",
+      "seed": 42,
+      "steps": 4,
+      "shift": null,
+      "scheduler_updates": 8,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "idm",
+      "method": "infer_action",
+      "seed": 7,
+      "steps": 1,
+      "shift": 3.0,
+      "scheduler_updates": 2,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "idm",
+      "method": "infer_joint",
+      "seed": 7,
+      "steps": 1,
+      "shift": 3.0,
+      "scheduler_updates": 2,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    },
+    {
+      "variant": "idm",
+      "method": "infer_action",
+      "seed": 42,
+      "steps": 20,
+      "shift": 5.0,
+      "scheduler_updates": 40,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": false
+    },
+    {
+      "variant": "idm",
+      "method": "infer_joint",
+      "seed": 42,
+      "steps": 20,
+      "shift": 5.0,
+      "scheduler_updates": 40,
+      "action_max_abs_diff": 0.0,
+      "all_scheduler_tensors_equal": true,
+      "decoded_video_equal": true
+    }
+  ]
+}

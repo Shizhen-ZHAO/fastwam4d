@@ -1,0 +1,2225 @@
+{
+  "scope": "源文件与函数AST审计索引；AST不同不等于数值不同，具体路径见EVALUATION_ALIGNMENT.md",
+  "files": [
+    {
+      "file": "configs/sim_libero.yaml",
+      "target_sha256": "6c98bf86ef777f45945a316db46291caa10bbaba35344fa95b0fb92b6eb1a4d3",
+      "reference_sha256": "b9ac23f5b5e5ada931bf31a0b1178dce21bb02d5b2fbbf258808397f1033f146",
+      "text_identical": false
+    },
+    {
+      "file": "experiments/libero/eval_libero_single.py",
+      "target_sha256": "9563cff7ea4928fa65f2d92be403b4761d4b77e13536a288a284922535fbc9c0",
+      "reference_sha256": "bc8ae6dc6882c533100866f3f32fcca6471c4c6b4ff43b07e232ed72d21170ee",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "NumpyEncoder.default",
+          "target_line": 57,
+          "reference_line": 66,
+          "ast_identical": true
+        },
+        {
+          "name": "_FanoutHook.__call__",
+          "target_line": null,
+          "reference_line": 757,
+          "ast_identical": false
+        },
+        {
+          "name": "_FanoutHook.__init__",
+          "target_line": null,
+          "reference_line": 754,
+          "ast_identical": false
+        },
+        {
+          "name": "_FanoutHook.notify_inference_start",
+          "target_line": null,
+          "reference_line": 761,
+          "ast_identical": false
+        },
+        {
+          "name": "_SimRenderGate.__init__",
+          "target_line": null,
+          "reference_line": 786,
+          "ast_identical": false
+        },
+        {
+          "name": "_SimRenderGate.render",
+          "target_line": null,
+          "reference_line": 793,
+          "ast_identical": false
+        },
+        {
+          "name": "_SimRenderGate.restore",
+          "target_line": null,
+          "reference_line": 808,
+          "ast_identical": false
+        },
+        {
+          "name": "_align_rope_config_with_ckpt",
+          "target_line": null,
+          "reference_line": 130,
+          "ast_identical": false
+        },
+        {
+          "name": "_center_crop_resize",
+          "target_line": 159,
+          "reference_line": 225,
+          "ast_identical": true
+        },
+        {
+          "name": "_combine_hooks",
+          "target_line": null,
+          "reference_line": 767,
+          "ast_identical": false
+        },
+        {
+          "name": "_compute_clip_mean_psnr",
+          "target_line": 328,
+          "reference_line": 394,
+          "ast_identical": true
+        },
+        {
+          "name": "_denormalize_action",
+          "target_line": 263,
+          "reference_line": 329,
+          "ast_identical": true
+        },
+        {
+          "name": "_extract_sim_state",
+          "target_line": 248,
+          "reference_line": 314,
+          "ast_identical": true
+        },
+        {
+          "name": "_frame_to_rgb_array",
+          "target_line": 316,
+          "reference_line": 382,
+          "ast_identical": true
+        },
+        {
+          "name": "_get_future_frame_capture_steps",
+          "target_line": 309,
+          "reference_line": 375,
+          "ast_identical": true
+        },
+        {
+          "name": "_get_libero_task_init_states",
+          "target_line": null,
+          "reference_line": 562,
+          "ast_identical": false
+        },
+        {
+          "name": "_get_max_steps",
+          "target_line": 455,
+          "reference_line": 549,
+          "ast_identical": true
+        },
+        {
+          "name": "_get_num_video_frames",
+          "target_line": 282,
+          "reference_line": 348,
+          "ast_identical": true
+        },
+        {
+          "name": "_load_model_checkpoint",
+          "target_line": 121,
+          "reference_line": 187,
+          "ast_identical": true
+        },
+        {
+          "name": "_maybe_install_render_gate",
+          "target_line": null,
+          "reference_line": 812,
+          "ast_identical": false
+        },
+        {
+          "name": "_mixed_precision_to_model_dtype",
+          "target_line": 77,
+          "reference_line": 86,
+          "ast_identical": true
+        },
+        {
+          "name": "_normalize_mixed_precision",
+          "target_line": 67,
+          "reference_line": 76,
+          "ast_identical": true
+        },
+        {
+          "name": "_normalize_proprio",
+          "target_line": 171,
+          "reference_line": 237,
+          "ast_identical": true
+        },
+        {
+          "name": "_obs_to_model_input",
+          "target_line": 188,
+          "reference_line": 254,
+          "ast_identical": true
+        },
+        {
+          "name": "_predict_action_chunk",
+          "target_line": 363,
+          "reference_line": 442,
+          "ast_identical": false
+        },
+        {
+          "name": "_required_worker_path",
+          "target_line": 705,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "_resolve_dataset_stats_path",
+          "target_line": 93,
+          "reference_line": 102,
+          "ast_identical": true
+        },
+        {
+          "name": "_resolve_eval_device",
+          "target_line": 86,
+          "reference_line": 95,
+          "ast_identical": true
+        },
+        {
+          "name": "_resolve_infer_seed",
+          "target_line": null,
+          "reference_line": 429,
+          "ast_identical": false
+        },
+        {
+          "name": "_result_file",
+          "target_line": 712,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "_run_task_to_file",
+          "target_line": 717,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "_run_worker_loop",
+          "target_line": 798,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "_select_predicted_future_frames",
+          "target_line": 298,
+          "reference_line": 364,
+          "ast_identical": true
+        },
+        {
+          "name": "_validate_visualize_future_video_cfg",
+          "target_line": 286,
+          "reference_line": 352,
+          "ast_identical": true
+        },
+        {
+          "name": "eval_single_process",
+          "target_line": 870,
+          "reference_line": 989,
+          "ast_identical": false
+        },
+        {
+          "name": "run_single_episode",
+          "target_line": 468,
+          "reference_line": 576,
+          "ast_identical": false
+        },
+        {
+          "name": "run_single_task",
+          "target_line": 607,
+          "reference_line": 838,
+          "ast_identical": false
+        }
+      ]
+    },
+    {
+      "file": "experiments/libero/run_libero_manager.py",
+      "target_sha256": "6485800ef3c58929cd9ee339d5139b3231e67f8618bf380fcd5fcf12baf2f3ed",
+      "reference_sha256": "345dfed0b2aee7ffa1d6104d8d08608ad35e955e2e26edf827da27b92e4224a4",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "_completed_task_count",
+          "target_line": 97,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "_is_blocked_override",
+          "target_line": 51,
+          "reference_line": 71,
+          "ast_identical": false
+        },
+        {
+          "name": "_resolve_worker_task_choice",
+          "target_line": 75,
+          "reference_line": 90,
+          "ast_identical": false
+        },
+        {
+          "name": "_task_result_exists",
+          "target_line": 85,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "_worker_current_task",
+          "target_line": 89,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "collect_worker_overrides",
+          "target_line": 67,
+          "reference_line": 85,
+          "ast_identical": false
+        },
+        {
+          "name": "create_task_file",
+          "target_line": 30,
+          "reference_line": 18,
+          "ast_identical": false
+        },
+        {
+          "name": "main",
+          "target_line": 305,
+          "reference_line": 168,
+          "ast_identical": false
+        },
+        {
+          "name": "run_evaluation",
+          "target_line": 101,
+          "reference_line": 99,
+          "ast_identical": false
+        }
+      ]
+    },
+    {
+      "file": "experiments/libero/libero_utils.py",
+      "target_sha256": "16e59af7c0824f196759c9977c2e4cd4c9cbc5ecbf597387f0a09da5ed50dc60",
+      "reference_sha256": "e198ebcef84132dca0418e93cc62953d5bfe39571a9c422fb12da753d39984e7",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "binarize_gripper_open",
+          "target_line": 151,
+          "reference_line": 152,
+          "ast_identical": true
+        },
+        {
+          "name": "get_libero_dummy_action",
+          "target_line": 43,
+          "reference_line": 44,
+          "ast_identical": true
+        },
+        {
+          "name": "get_libero_env",
+          "target_line": 19,
+          "reference_line": 19,
+          "ast_identical": true
+        },
+        {
+          "name": "get_libero_image",
+          "target_line": 47,
+          "reference_line": 48,
+          "ast_identical": true
+        },
+        {
+          "name": "invert_gripper_action",
+          "target_line": 184,
+          "reference_line": 185,
+          "ast_identical": true
+        },
+        {
+          "name": "quat2axisangle",
+          "target_line": 158,
+          "reference_line": 159,
+          "ast_identical": true
+        },
+        {
+          "name": "save_prediction_video",
+          "target_line": 88,
+          "reference_line": 89,
+          "ast_identical": true
+        },
+        {
+          "name": "save_rollout_video",
+          "target_line": 61,
+          "reference_line": 62,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "experiments/libero/action_ensembler.py",
+      "target_sha256": "13490f701ea9be8d618e199189648c5c3184b5d6a41b32665565e093c0209534",
+      "reference_sha256": "13490f701ea9be8d618e199189648c5c3184b5d6a41b32665565e093c0209534",
+      "text_identical": true,
+      "functions": [
+        {
+          "name": "ActionEnsembler.__init__",
+          "target_line": 6,
+          "reference_line": 6,
+          "ast_identical": true
+        },
+        {
+          "name": "ActionEnsembler._cleanup",
+          "target_line": 29,
+          "reference_line": 29,
+          "ast_identical": true
+        },
+        {
+          "name": "ActionEnsembler.add_actions",
+          "target_line": 12,
+          "reference_line": 12,
+          "ast_identical": true
+        },
+        {
+          "name": "ActionEnsembler.get_action",
+          "target_line": 21,
+          "reference_line": 21,
+          "ast_identical": true
+        },
+        {
+          "name": "ActionEnsembler.reset",
+          "target_line": 9,
+          "reference_line": 9,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "experiments/libero/summarize_results.py",
+      "target_sha256": "52f780b16b15efbc1b0d1a214d3784f1b483b7910a1fa40669add8679dfef1b7",
+      "reference_sha256": "d4bbc0de5fae18a8367bc7cd59297da913e80fa4ee4f9e106ec1848247e5c132",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "_iter_suite_dirs",
+          "target_line": null,
+          "reference_line": 192,
+          "ast_identical": false
+        },
+        {
+          "name": "_iter_task_result_records",
+          "target_line": null,
+          "reference_line": 252,
+          "ast_identical": false
+        },
+        {
+          "name": "_load_eval_meta",
+          "target_line": null,
+          "reference_line": 46,
+          "ast_identical": false
+        },
+        {
+          "name": "_load_task_classification",
+          "target_line": null,
+          "reference_line": 123,
+          "ast_identical": false
+        },
+        {
+          "name": "_lookup_task_classification",
+          "target_line": null,
+          "reference_line": 170,
+          "ast_identical": false
+        },
+        {
+          "name": "_merge_task_shard_records",
+          "target_line": null,
+          "reference_line": 205,
+          "ast_identical": false
+        },
+        {
+          "name": "_new_stats",
+          "target_line": null,
+          "reference_line": 16,
+          "ast_identical": false
+        },
+        {
+          "name": "_resolve_task_classification_path",
+          "target_line": null,
+          "reference_line": 77,
+          "ast_identical": false
+        },
+        {
+          "name": "_stats_to_output",
+          "target_line": null,
+          "reference_line": 312,
+          "ast_identical": false
+        },
+        {
+          "name": "_success_rate_percent",
+          "target_line": null,
+          "reference_line": 307,
+          "ast_identical": false
+        },
+        {
+          "name": "_suite_from_task_key",
+          "target_line": null,
+          "reference_line": 350,
+          "ast_identical": false
+        },
+        {
+          "name": "_update_stats",
+          "target_line": null,
+          "reference_line": 295,
+          "ast_identical": false
+        },
+        {
+          "name": "_write_group_success_csv",
+          "target_line": null,
+          "reference_line": 328,
+          "ast_identical": false
+        },
+        {
+          "name": "format_time",
+          "target_line": 7,
+          "reference_line": 28,
+          "ast_identical": false
+        },
+        {
+          "name": "main",
+          "target_line": 297,
+          "reference_line": 643,
+          "ast_identical": false
+        },
+        {
+          "name": "pick_latest_run",
+          "target_line": null,
+          "reference_line": 58,
+          "ast_identical": false
+        },
+        {
+          "name": "summarize_results",
+          "target_line": 29,
+          "reference_line": 354,
+          "ast_identical": false
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/fastwam.py",
+      "target_sha256": "30b49078fff7093f008f6948866e3780f5f34ae3f8e77a55f08eccbef132724c",
+      "reference_sha256": "d02ddb4b61c5336b82a5f29f173b220d7cdfaeaa423d7b25a92e993d8df24413",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "FastWAM.__init__",
+          "target_line": 21,
+          "reference_line": 21,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAM._append_proprio_to_context",
+          "target_line": 224,
+          "reference_line": 219,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM._build_mot_attention_mask",
+          "target_line": 394,
+          "reference_line": 403,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM._check_resize_height_width",
+          "target_line": 197,
+          "reference_line": 192,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM._compute_video_loss_per_sample",
+          "target_line": 417,
+          "reference_line": 426,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM._decode_latents",
+          "target_line": 272,
+          "reference_line": 267,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM._denoise_action_with_video_cache",
+          "target_line": 700,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAM._encode_input_image_latents_tensor",
+          "target_line": 259,
+          "reference_line": 254,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM._encode_video_latents",
+          "target_line": 248,
+          "reference_line": 243,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM._joint_denoise_core",
+          "target_line": 456,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAM._predict_action_noise",
+          "target_line": 641,
+          "reference_line": 662,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAM._predict_action_noise_with_cache",
+          "target_line": 736,
+          "reference_line": 725,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAM._predict_joint_noise",
+          "target_line": 608,
+          "reference_line": 591,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAM.build_inputs",
+          "target_line": 282,
+          "reference_line": 277,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAM.encode_prompt",
+          "target_line": 207,
+          "reference_line": 202,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM.forward",
+          "target_line": 1229,
+          "reference_line": 1178,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM.from_wan22_pretrained",
+          "target_line": 94,
+          "reference_line": 91,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAM.infer",
+          "target_line": 1159,
+          "reference_line": 1108,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM.infer_action",
+          "target_line": 976,
+          "reference_line": 953,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAM.infer_joint",
+          "target_line": 768,
+          "reference_line": 768,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAM.load_checkpoint",
+          "target_line": 1208,
+          "reference_line": 1157,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM.save_checkpoint",
+          "target_line": 1196,
+          "reference_line": 1145,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM.to",
+          "target_line": 188,
+          "reference_line": 183,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAM.training_loss",
+          "target_line": 519,
+          "reference_line": 465,
+          "ast_identical": false
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/fastwam_joint.py",
+      "target_sha256": "a61aab79cfc607af02ab816849329a13c1dcd0bbcbf63c6584a345d8a67bb2b6",
+      "reference_sha256": "86f6c6f8c216537904673ef5b75a8d7b82b6031fe0fa924d115e709f0e3cbf7a",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "FastWAMJoint._build_mot_attention_mask",
+          "target_line": 29,
+          "reference_line": 44,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMJoint.from_wan22_pretrained",
+          "target_line": 16,
+          "reference_line": 31,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAMJoint.infer_action",
+          "target_line": 98,
+          "reference_line": 120,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMJoint.infer_joint",
+          "target_line": 52,
+          "reference_line": 74,
+          "ast_identical": false
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/fastwam_idm.py",
+      "target_sha256": "0da523681b845c2d4f4c2719ad212e5efed3cb2c468b284a793911c2adaea248",
+      "reference_sha256": "c91ee760f9d472a5a2ba7f671429808cbef1e6c0c0a72dea65cfecf6ba0c9011",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "FastWAMIDM.__init__",
+          "target_line": null,
+          "reference_line": 19,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMIDM._build_teacher_forcing_attention_mask",
+          "target_line": 29,
+          "reference_line": 35,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMIDM._denoise_video",
+          "target_line": 284,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMIDM._teacher_forcing_training_denoise_core",
+          "target_line": 69,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMIDM.from_wan22_pretrained",
+          "target_line": 20,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMIDM.infer_action",
+          "target_line": 366,
+          "reference_line": 246,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMIDM.infer_joint",
+          "target_line": 316,
+          "reference_line": 289,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMIDM.training_loss",
+          "target_line": 176,
+          "reference_line": 73,
+          "ast_identical": false
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/action_dit.py",
+      "target_sha256": "df990faa6c1993e8a7f6eb5511baeaff3e208e5a10d696001e08635391289ee7",
+      "reference_sha256": "c435508fc8f0779970fadc6a7090289ad8505f3c1fbb5d259356cb3b6813bde1",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "ActionDiT.__init__",
+          "target_line": 44,
+          "reference_line": 49,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionDiT._apply",
+          "target_line": 107,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionDiT._build_action_freqs",
+          "target_line": null,
+          "reference_line": 194,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionDiT._build_mot_action_freqs",
+          "target_line": null,
+          "reference_line": 197,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionDiT._mot_rope_cache_len",
+          "target_line": null,
+          "reference_line": 189,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionDiT._rope_cache_len",
+          "target_line": null,
+          "reference_line": 186,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionDiT.backbone_key_set",
+          "target_line": 117,
+          "reference_line": 393,
+          "ast_identical": true
+        },
+        {
+          "name": "ActionDiT.forward",
+          "target_line": 338,
+          "reference_line": 610,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionDiT.from_pretrained",
+          "target_line": 125,
+          "reference_line": 401,
+          "ast_identical": true
+        },
+        {
+          "name": "ActionDiT.get_freqs",
+          "target_line": 113,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionDiT.post",
+          "target_line": 334,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionDiT.post_dit",
+          "target_line": 314,
+          "reference_line": 607,
+          "ast_identical": true
+        },
+        {
+          "name": "ActionDiT.pre_dit",
+          "target_line": 239,
+          "reference_line": 515,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionDiT.prepare",
+          "target_line": 317,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "ActionHead.__init__",
+          "target_line": 18,
+          "reference_line": 23,
+          "ast_identical": true
+        },
+        {
+          "name": "ActionHead.forward",
+          "target_line": 24,
+          "reference_line": 29,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/wan_video_dit.py",
+      "target_sha256": "578712e83fac2815d3e3a3fd9134178028082deba361433122fe3c5764982dd6",
+      "reference_sha256": "53cb7e81af2dd9225988da063a2579d348b413282ace08ab378457c71b4d7cf6",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "AttentionModule.__init__",
+          "target_line": 161,
+          "reference_line": 185,
+          "ast_identical": true
+        },
+        {
+          "name": "AttentionModule.forward",
+          "target_line": 165,
+          "reference_line": 189,
+          "ast_identical": true
+        },
+        {
+          "name": "CrossAttention.__init__",
+          "target_line": 198,
+          "reference_line": 222,
+          "ast_identical": true
+        },
+        {
+          "name": "CrossAttention.forward",
+          "target_line": 214,
+          "reference_line": 238,
+          "ast_identical": true
+        },
+        {
+          "name": "DiTBlock.__init__",
+          "target_line": 230,
+          "reference_line": 254,
+          "ast_identical": true
+        },
+        {
+          "name": "DiTBlock.forward",
+          "target_line": 248,
+          "reference_line": 272,
+          "ast_identical": true
+        },
+        {
+          "name": "GateModule.__init__",
+          "target_line": 223,
+          "reference_line": 247,
+          "ast_identical": true
+        },
+        {
+          "name": "GateModule.forward",
+          "target_line": 226,
+          "reference_line": 250,
+          "ast_identical": true
+        },
+        {
+          "name": "Head.__init__",
+          "target_line": 291,
+          "reference_line": 315,
+          "ast_identical": true
+        },
+        {
+          "name": "Head.forward",
+          "target_line": 299,
+          "reference_line": 323,
+          "ast_identical": true
+        },
+        {
+          "name": "MLP.__init__",
+          "target_line": 271,
+          "reference_line": 295,
+          "ast_identical": true
+        },
+        {
+          "name": "MLP.forward",
+          "target_line": 284,
+          "reference_line": 308,
+          "ast_identical": true
+        },
+        {
+          "name": "RMSNorm.__init__",
+          "target_line": 147,
+          "reference_line": 171,
+          "ast_identical": true
+        },
+        {
+          "name": "RMSNorm.forward",
+          "target_line": 155,
+          "reference_line": 179,
+          "ast_identical": true
+        },
+        {
+          "name": "RMSNorm.norm",
+          "target_line": 152,
+          "reference_line": 176,
+          "ast_identical": true
+        },
+        {
+          "name": "SelfAttention.__init__",
+          "target_line": 171,
+          "reference_line": 195,
+          "ast_identical": true
+        },
+        {
+          "name": "SelfAttention.forward",
+          "target_line": 187,
+          "reference_line": 211,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoDiT.__init__",
+          "target_line": 310,
+          "reference_line": 334,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoDiT._apply",
+          "target_line": 400,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoDiT._validate_forward_inputs",
+          "target_line": 433,
+          "reference_line": 461,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoDiT.build_video_to_video_mask",
+          "target_line": 489,
+          "reference_line": 517,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoDiT.forward",
+          "target_line": 733,
+          "reference_line": 706,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoDiT.get_freqs",
+          "target_line": 406,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoDiT.patchify",
+          "target_line": 418,
+          "reference_line": 446,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoDiT.post",
+          "target_line": 722,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoDiT.post_dit",
+          "target_line": 634,
+          "reference_line": 700,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoDiT.pre_dit",
+          "target_line": 525,
+          "reference_line": 553,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoDiT.prepare",
+          "target_line": 640,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoDiT.unpatchify",
+          "target_line": 426,
+          "reference_line": 454,
+          "ast_identical": true
+        },
+        {
+          "name": "create_group_causal_attn_mask",
+          "target_line": 63,
+          "reference_line": 87,
+          "ast_identical": true
+        },
+        {
+          "name": "flash_attention",
+          "target_line": 13,
+          "reference_line": 14,
+          "ast_identical": true
+        },
+        {
+          "name": "modulate",
+          "target_line": 26,
+          "reference_line": 27,
+          "ast_identical": true
+        },
+        {
+          "name": "precompute_freqs_cis",
+          "target_line": 45,
+          "reference_line": 72,
+          "ast_identical": false
+        },
+        {
+          "name": "precompute_freqs_cis_3d",
+          "target_line": 37,
+          "reference_line": 38,
+          "ast_identical": true
+        },
+        {
+          "name": "precompute_freqs_cis_4d",
+          "target_line": null,
+          "reference_line": 46,
+          "ast_identical": false
+        },
+        {
+          "name": "precompute_freqs_cis_at",
+          "target_line": null,
+          "reference_line": 66,
+          "ast_identical": false
+        },
+        {
+          "name": "precompute_freqs_cis_bands",
+          "target_line": null,
+          "reference_line": 61,
+          "ast_identical": false
+        },
+        {
+          "name": "rope_apply",
+          "target_line": 54,
+          "reference_line": 78,
+          "ast_identical": false
+        },
+        {
+          "name": "sinusoidal_embedding_1d",
+          "target_line": 30,
+          "reference_line": 31,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/mot.py",
+      "target_sha256": "2383e4cfa00efa9cde889493e0b6c861bc7b17d24d731f5ff38d3ebf8ab7f541",
+      "reference_sha256": "28bdd3f5d4c194c0195a91b35010e4dca4a6d5a1cb0b1fd02876cd29b033c83e",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "MoT.__init__",
+          "target_line": 15,
+          "reference_line": 20,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT._apply_expert_post_block",
+          "target_line": 106,
+          "reference_line": 167,
+          "ast_identical": true
+        },
+        {
+          "name": "MoT._apply_expert_post_block_tensor",
+          "target_line": 131,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT._apply_post_with_optional_checkpoint",
+          "target_line": 213,
+          "reference_line": 454,
+          "ast_identical": true
+        },
+        {
+          "name": "MoT._build_cross_freqs",
+          "target_line": null,
+          "reference_line": 279,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT._build_expert_attention_io",
+          "target_line": 151,
+          "reference_line": 191,
+          "ast_identical": true
+        },
+        {
+          "name": "MoT._build_expert_attention_io_with_raw",
+          "target_line": null,
+          "reference_line": 253,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT._cross_only_action_attention",
+          "target_line": null,
+          "reference_line": 333,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT._emit_action_qk_hook",
+          "target_line": null,
+          "reference_line": 125,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT._forward_joint_layer",
+          "target_line": 580,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT._log_cross_rope_debug",
+          "target_line": null,
+          "reference_line": 387,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT._mixed_attention",
+          "target_line": 88,
+          "reference_line": 103,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT._split_modulation",
+          "target_line": 70,
+          "reference_line": 85,
+          "ast_identical": true
+        },
+        {
+          "name": "MoT.forward",
+          "target_line": 710,
+          "reference_line": 774,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT.forward_action_with_video_cache",
+          "target_line": 370,
+          "reference_line": 616,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT.forward_action_with_video_cache_tensor",
+          "target_line": 528,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT.forward_joint_core",
+          "target_line": 665,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT.prefill_video_cache",
+          "target_line": 284,
+          "reference_line": 525,
+          "ast_identical": false
+        },
+        {
+          "name": "MoT.prefill_video_cache_tensor",
+          "target_line": 474,
+          "reference_line": null,
+          "ast_identical": false
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/wan_video_vae.py",
+      "target_sha256": "3d2db28cfb1dc0a3631dcf39acd67d2a85b5833fc7480e5d19ecfed11e80dc3e",
+      "reference_sha256": "31b3fb9f844a76f5db5af4854e14802aae640b85b61d0de03a4b53b52515abb7",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "AttentionBlock.__init__",
+          "target_line": 309,
+          "reference_line": 309,
+          "ast_identical": true
+        },
+        {
+          "name": "AttentionBlock.forward",
+          "target_line": 321,
+          "reference_line": 321,
+          "ast_identical": true
+        },
+        {
+          "name": "AvgDown3D.__init__",
+          "target_line": 346,
+          "reference_line": 346,
+          "ast_identical": true
+        },
+        {
+          "name": "AvgDown3D.forward",
+          "target_line": 363,
+          "reference_line": 363,
+          "ast_identical": true
+        },
+        {
+          "name": "CausalConv3d.__init__",
+          "target_line": 38,
+          "reference_line": 38,
+          "ast_identical": true
+        },
+        {
+          "name": "CausalConv3d.forward",
+          "target_line": 44,
+          "reference_line": 44,
+          "ast_identical": true
+        },
+        {
+          "name": "Decoder3d.__init__",
+          "target_line": 737,
+          "reference_line": 737,
+          "ast_identical": true
+        },
+        {
+          "name": "Decoder3d.forward",
+          "target_line": 788,
+          "reference_line": 788,
+          "ast_identical": true
+        },
+        {
+          "name": "Decoder3d_38.__init__",
+          "target_line": 843,
+          "reference_line": 843,
+          "ast_identical": true
+        },
+        {
+          "name": "Decoder3d_38.forward",
+          "target_line": 888,
+          "reference_line": 888,
+          "ast_identical": true
+        },
+        {
+          "name": "Down_ResidualBlock.__init__",
+          "target_line": 443,
+          "reference_line": 443,
+          "ast_identical": true
+        },
+        {
+          "name": "Down_ResidualBlock.forward",
+          "target_line": 469,
+          "reference_line": 469,
+          "ast_identical": true
+        },
+        {
+          "name": "DupUp3D.__init__",
+          "target_line": 399,
+          "reference_line": 399,
+          "ast_identical": true
+        },
+        {
+          "name": "DupUp3D.forward",
+          "target_line": 417,
+          "reference_line": 417,
+          "ast_identical": true
+        },
+        {
+          "name": "Encoder3d.__init__",
+          "target_line": 518,
+          "reference_line": 518,
+          "ast_identical": true
+        },
+        {
+          "name": "Encoder3d.forward",
+          "target_line": 568,
+          "reference_line": 568,
+          "ast_identical": true
+        },
+        {
+          "name": "Encoder3d_38.__init__",
+          "target_line": 621,
+          "reference_line": 621,
+          "ast_identical": true
+        },
+        {
+          "name": "Encoder3d_38.forward",
+          "target_line": 678,
+          "reference_line": 678,
+          "ast_identical": true
+        },
+        {
+          "name": "RMS_norm.__init__",
+          "target_line": 57,
+          "reference_line": 57,
+          "ast_identical": true
+        },
+        {
+          "name": "RMS_norm.forward",
+          "target_line": 67,
+          "reference_line": 67,
+          "ast_identical": true
+        },
+        {
+          "name": "Resample.__init__",
+          "target_line": 84,
+          "reference_line": 84,
+          "ast_identical": true
+        },
+        {
+          "name": "Resample.forward",
+          "target_line": 120,
+          "reference_line": 120,
+          "ast_identical": true
+        },
+        {
+          "name": "Resample.init_weight",
+          "target_line": 176,
+          "reference_line": 176,
+          "ast_identical": true
+        },
+        {
+          "name": "Resample.init_weight2",
+          "target_line": 187,
+          "reference_line": 187,
+          "ast_identical": true
+        },
+        {
+          "name": "Resample38.__init__",
+          "target_line": 229,
+          "reference_line": 229,
+          "ast_identical": true
+        },
+        {
+          "name": "ResidualBlock.__init__",
+          "target_line": 269,
+          "reference_line": 269,
+          "ast_identical": true
+        },
+        {
+          "name": "ResidualBlock.forward",
+          "target_line": 283,
+          "reference_line": 283,
+          "ast_identical": true
+        },
+        {
+          "name": "Up_ResidualBlock.__init__",
+          "target_line": 478,
+          "reference_line": 478,
+          "ast_identical": true
+        },
+        {
+          "name": "Up_ResidualBlock.forward",
+          "target_line": 506,
+          "reference_line": 506,
+          "ast_identical": true
+        },
+        {
+          "name": "Upsample.forward",
+          "target_line": 75,
+          "reference_line": 75,
+          "ast_identical": true
+        },
+        {
+          "name": "VideoVAE38_.__init__",
+          "target_line": 1267,
+          "reference_line": 1272,
+          "ast_identical": true
+        },
+        {
+          "name": "VideoVAE38_.decode",
+          "target_line": 1322,
+          "reference_line": 1327,
+          "ast_identical": true
+        },
+        {
+          "name": "VideoVAE38_.encode",
+          "target_line": 1294,
+          "reference_line": 1299,
+          "ast_identical": true
+        },
+        {
+          "name": "VideoVAE_.__init__",
+          "target_line": 952,
+          "reference_line": 952,
+          "ast_identical": true
+        },
+        {
+          "name": "VideoVAE_.clear_cache",
+          "target_line": 1047,
+          "reference_line": 1047,
+          "ast_identical": true
+        },
+        {
+          "name": "VideoVAE_.decode",
+          "target_line": 1010,
+          "reference_line": 1010,
+          "ast_identical": true
+        },
+        {
+          "name": "VideoVAE_.encode",
+          "target_line": 983,
+          "reference_line": 983,
+          "ast_identical": true
+        },
+        {
+          "name": "VideoVAE_.forward",
+          "target_line": 977,
+          "reference_line": 977,
+          "ast_identical": true
+        },
+        {
+          "name": "VideoVAE_.reparameterize",
+          "target_line": 1035,
+          "reference_line": 1035,
+          "ast_identical": true
+        },
+        {
+          "name": "VideoVAE_.sample",
+          "target_line": 1040,
+          "reference_line": 1040,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoVAE.__init__",
+          "target_line": 1059,
+          "reference_line": 1059,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoVAE.build_1d_mask",
+          "target_line": 1084,
+          "reference_line": 1081,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoVAE.build_mask",
+          "target_line": 1093,
+          "reference_line": 1090,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoVAE.decode",
+          "target_line": 1231,
+          "reference_line": 1236,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoVAE.encode",
+          "target_line": 1221,
+          "reference_line": 1218,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoVAE.scale",
+          "target_line": 1080,
+          "reference_line": null,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoVAE.single_decode",
+          "target_line": 1215,
+          "reference_line": 1212,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoVAE.single_encode",
+          "target_line": 1209,
+          "reference_line": 1206,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoVAE.state_dict_converter",
+          "target_line": 1247,
+          "reference_line": 1252,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoVAE.tiled_decode",
+          "target_line": 1106,
+          "reference_line": 1103,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoVAE.tiled_encode",
+          "target_line": 1158,
+          "reference_line": 1155,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoVAE38.__init__",
+          "target_line": 1352,
+          "reference_line": 1357,
+          "ast_identical": false
+        },
+        {
+          "name": "WanVideoVAEStateDictConverter.__init__",
+          "target_line": 1253,
+          "reference_line": 1258,
+          "ast_identical": true
+        },
+        {
+          "name": "WanVideoVAEStateDictConverter.from_civitai",
+          "target_line": 1256,
+          "reference_line": 1261,
+          "ast_identical": true
+        },
+        {
+          "name": "block_causal_mask",
+          "target_line": 19,
+          "reference_line": 19,
+          "ast_identical": true
+        },
+        {
+          "name": "check_is_instance",
+          "target_line": 11,
+          "reference_line": 11,
+          "ast_identical": true
+        },
+        {
+          "name": "count_conv3d",
+          "target_line": 942,
+          "reference_line": 942,
+          "ast_identical": true
+        },
+        {
+          "name": "patchify",
+          "target_line": 199,
+          "reference_line": 199,
+          "ast_identical": true
+        },
+        {
+          "name": "unpatchify",
+          "target_line": 214,
+          "reference_line": 214,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/wan_video_text_encoder.py",
+      "target_sha256": "aedf7f131556a39b99a273deec3a85d67f41b5367cef41f310f33a807ae60a87",
+      "reference_sha256": "aedf7f131556a39b99a273deec3a85d67f41b5367cef41f310f33a807ae60a87",
+      "text_identical": true,
+      "functions": [
+        {
+          "name": "GELU.forward",
+          "target_line": 31,
+          "reference_line": 31,
+          "ast_identical": true
+        },
+        {
+          "name": "HuggingfaceTokenizer.__call__",
+          "target_line": 309,
+          "reference_line": 309,
+          "ast_identical": true
+        },
+        {
+          "name": "HuggingfaceTokenizer.__init__",
+          "target_line": 299,
+          "reference_line": 299,
+          "ast_identical": true
+        },
+        {
+          "name": "HuggingfaceTokenizer._clean",
+          "target_line": 335,
+          "reference_line": 335,
+          "ast_identical": true
+        },
+        {
+          "name": "T5Attention.__init__",
+          "target_line": 54,
+          "reference_line": 54,
+          "ast_identical": true
+        },
+        {
+          "name": "T5Attention.forward",
+          "target_line": 69,
+          "reference_line": 69,
+          "ast_identical": true
+        },
+        {
+          "name": "T5FeedForward.__init__",
+          "target_line": 108,
+          "reference_line": 108,
+          "ast_identical": true
+        },
+        {
+          "name": "T5FeedForward.forward",
+          "target_line": 119,
+          "reference_line": 119,
+          "ast_identical": true
+        },
+        {
+          "name": "T5LayerNorm.__init__",
+          "target_line": 38,
+          "reference_line": 38,
+          "ast_identical": true
+        },
+        {
+          "name": "T5LayerNorm.forward",
+          "target_line": 44,
+          "reference_line": 44,
+          "ast_identical": true
+        },
+        {
+          "name": "T5RelativeEmbedding.__init__",
+          "target_line": 163,
+          "reference_line": 163,
+          "ast_identical": true
+        },
+        {
+          "name": "T5RelativeEmbedding._relative_position_bucket",
+          "target_line": 185,
+          "reference_line": 185,
+          "ast_identical": true
+        },
+        {
+          "name": "T5RelativeEmbedding.forward",
+          "target_line": 173,
+          "reference_line": 173,
+          "ast_identical": true
+        },
+        {
+          "name": "T5SelfAttention.__init__",
+          "target_line": 129,
+          "reference_line": 129,
+          "ast_identical": true
+        },
+        {
+          "name": "T5SelfAttention.forward",
+          "target_line": 153,
+          "reference_line": 153,
+          "ast_identical": true
+        },
+        {
+          "name": "WanTextEncoder.__init__",
+          "target_line": 225,
+          "reference_line": 225,
+          "ast_identical": true
+        },
+        {
+          "name": "WanTextEncoder.forward",
+          "target_line": 260,
+          "reference_line": 260,
+          "ast_identical": true
+        },
+        {
+          "name": "basic_clean",
+          "target_line": 272,
+          "reference_line": 272,
+          "ast_identical": true
+        },
+        {
+          "name": "canonicalize",
+          "target_line": 284,
+          "reference_line": 284,
+          "ast_identical": true
+        },
+        {
+          "name": "fp16_clamp",
+          "target_line": 22,
+          "reference_line": 22,
+          "ast_identical": true
+        },
+        {
+          "name": "init_weights",
+          "target_line": 206,
+          "reference_line": 206,
+          "ast_identical": true
+        },
+        {
+          "name": "whitespace_clean",
+          "target_line": 278,
+          "reference_line": 278,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/helpers/loader.py",
+      "target_sha256": "792f66bd0609c1365256aa24d43301340f81260c1651d89b04d2ae8224a08726",
+      "reference_sha256": "07c06d5a8ac60dc0408a9985af78d0c8f5f5027b9b99ae9315a5c727a04da803",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "_describe_path",
+          "target_line": null,
+          "reference_line": 22,
+          "ast_identical": false
+        },
+        {
+          "name": "_emit_progress",
+          "target_line": null,
+          "reference_line": 30,
+          "ast_identical": false
+        },
+        {
+          "name": "_load_registered_model",
+          "target_line": 89,
+          "reference_line": 103,
+          "ast_identical": false
+        },
+        {
+          "name": "_resolve_configs",
+          "target_line": 125,
+          "reference_line": 150,
+          "ast_identical": true
+        },
+        {
+          "name": "_validate_dit_config",
+          "target_line": 56,
+          "reference_line": 70,
+          "ast_identical": true
+        },
+        {
+          "name": "load_wan22_ti2v_5b_components",
+          "target_line": 141,
+          "reference_line": 166,
+          "ast_identical": false
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/helpers/io.py",
+      "target_sha256": "1c6c1bc8a975b47092912833194fce25e2e3ac886fbab72d73af3ff5a00b3c62",
+      "reference_sha256": "1c6c1bc8a975b47092912833194fce25e2e3ac886fbab72d73af3ff5a00b3c62",
+      "text_identical": true,
+      "functions": [
+        {
+          "name": "ModelConfig.check_input",
+          "target_line": 21,
+          "reference_line": 21,
+          "ast_identical": true
+        },
+        {
+          "name": "ModelConfig.download",
+          "target_line": 73,
+          "reference_line": 73,
+          "ast_identical": true
+        },
+        {
+          "name": "ModelConfig.download_if_necessary",
+          "target_line": 101,
+          "reference_line": 101,
+          "ast_identical": true
+        },
+        {
+          "name": "ModelConfig.parse_download_source",
+          "target_line": 34,
+          "reference_line": 34,
+          "ast_identical": true
+        },
+        {
+          "name": "ModelConfig.parse_original_file_pattern",
+          "target_line": 25,
+          "reference_line": 25,
+          "ast_identical": true
+        },
+        {
+          "name": "ModelConfig.parse_skip_download",
+          "target_line": 40,
+          "reference_line": 40,
+          "ast_identical": true
+        },
+        {
+          "name": "ModelConfig.require_downloading",
+          "target_line": 54,
+          "reference_line": 54,
+          "ast_identical": true
+        },
+        {
+          "name": "ModelConfig.reset_local_model_path",
+          "target_line": 48,
+          "reference_line": 48,
+          "ast_identical": true
+        },
+        {
+          "name": "_convert_keys_dict_to_single_str",
+          "target_line": 189,
+          "reference_line": 189,
+          "ast_identical": true
+        },
+        {
+          "name": "_convert_state_dict_to_keys_dict",
+          "target_line": 163,
+          "reference_line": 163,
+          "ast_identical": true
+        },
+        {
+          "name": "_load_keys_dict",
+          "target_line": 178,
+          "reference_line": 178,
+          "ast_identical": true
+        },
+        {
+          "name": "_load_keys_dict_from_bin",
+          "target_line": 173,
+          "reference_line": 173,
+          "ast_identical": true
+        },
+        {
+          "name": "_load_keys_dict_from_safetensors",
+          "target_line": 155,
+          "reference_line": 155,
+          "ast_identical": true
+        },
+        {
+          "name": "hash_model_file",
+          "target_line": 204,
+          "reference_line": 204,
+          "ast_identical": true
+        },
+        {
+          "name": "load_state_dict",
+          "target_line": 117,
+          "reference_line": 117,
+          "ast_identical": true
+        },
+        {
+          "name": "load_state_dict_from_bin",
+          "target_line": 139,
+          "reference_line": 139,
+          "ast_identical": true
+        },
+        {
+          "name": "load_state_dict_from_safetensors",
+          "target_line": 128,
+          "reference_line": 128,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/helpers/state_dict_converters.py",
+      "target_sha256": "81d213373e5056a8d8bf31768b9b04164138ea78d0b306e316334841499f4bf9",
+      "reference_sha256": "81d213373e5056a8d8bf31768b9b04164138ea78d0b306e316334841499f4bf9",
+      "text_identical": true,
+      "functions": [
+        {
+          "name": "wan_video_dit_from_diffusers",
+          "target_line": 10,
+          "reference_line": 10,
+          "ast_identical": true
+        },
+        {
+          "name": "wan_video_dit_state_dict_converter",
+          "target_line": 81,
+          "reference_line": 81,
+          "ast_identical": true
+        },
+        {
+          "name": "wan_video_vae_state_dict_converter",
+          "target_line": 1,
+          "reference_line": 1,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/models/wan22/schedulers/scheduler_continuous.py",
+      "target_sha256": "2ececce284f7b9fe876965fbf5e11ca7b69caaf693979266b0f63062a589f181",
+      "reference_sha256": "2ececce284f7b9fe876965fbf5e11ca7b69caaf693979266b0f63062a589f181",
+      "text_identical": true,
+      "functions": [
+        {
+          "name": "WanContinuousFlowMatchScheduler.__init__",
+          "target_line": 7,
+          "reference_line": 7,
+          "ast_identical": true
+        },
+        {
+          "name": "WanContinuousFlowMatchScheduler._phi",
+          "target_line": 18,
+          "reference_line": 18,
+          "ast_identical": true
+        },
+        {
+          "name": "WanContinuousFlowMatchScheduler._precompute_training_weight_stats",
+          "target_line": 21,
+          "reference_line": 21,
+          "ast_identical": true
+        },
+        {
+          "name": "WanContinuousFlowMatchScheduler.add_noise",
+          "target_line": 49,
+          "reference_line": 49,
+          "ast_identical": true
+        },
+        {
+          "name": "WanContinuousFlowMatchScheduler.build_inference_schedule",
+          "target_line": 63,
+          "reference_line": 63,
+          "ast_identical": true
+        },
+        {
+          "name": "WanContinuousFlowMatchScheduler.sample_training_t",
+          "target_line": 31,
+          "reference_line": 31,
+          "ast_identical": true
+        },
+        {
+          "name": "WanContinuousFlowMatchScheduler.step",
+          "target_line": 83,
+          "reference_line": 83,
+          "ast_identical": true
+        },
+        {
+          "name": "WanContinuousFlowMatchScheduler.training_target",
+          "target_line": 59,
+          "reference_line": 59,
+          "ast_identical": true
+        },
+        {
+          "name": "WanContinuousFlowMatchScheduler.training_weight",
+          "target_line": 39,
+          "reference_line": 39,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/datasets/lerobot/processors/fastwam_processor.py",
+      "target_sha256": "3aa0e275b3815b67785c6e38ac5fc400472f9d09ac18b2ab269ea77bf574ade4",
+      "reference_sha256": "8f7dd196732a1d4efe3b780f69b6fbe7ba1837572daf8b18c128da056e2e4b1a",
+      "text_identical": false,
+      "functions": [
+        {
+          "name": "FastWAMProcessor.__init__",
+          "target_line": 15,
+          "reference_line": 15,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMProcessor.action_state_transform",
+          "target_line": 151,
+          "reference_line": 149,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAMProcessor.augment_instruction",
+          "target_line": 122,
+          "reference_line": 120,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAMProcessor.eval",
+          "target_line": 109,
+          "reference_line": 107,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAMProcessor.is_train",
+          "target_line": 94,
+          "reference_line": 92,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAMProcessor.normalizer",
+          "target_line": 100,
+          "reference_line": 98,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAMProcessor.postprocess",
+          "target_line": 286,
+          "reference_line": 287,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAMProcessor.preprocess",
+          "target_line": 184,
+          "reference_line": 182,
+          "ast_identical": false
+        },
+        {
+          "name": "FastWAMProcessor.set_normalizer_from_stats",
+          "target_line": 113,
+          "reference_line": 111,
+          "ast_identical": true
+        },
+        {
+          "name": "FastWAMProcessor.train",
+          "target_line": 105,
+          "reference_line": 103,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/datasets/lerobot/utils/normalizer.py",
+      "target_sha256": "5ac89a646cd6395e98feaa832f8fdf7c7e00857080af3d9c15710e243c43ad43",
+      "reference_sha256": "5ac89a646cd6395e98feaa832f8fdf7c7e00857080af3d9c15710e243c43ad43",
+      "text_identical": true,
+      "functions": [
+        {
+          "name": "LinearNormalizer.__init__",
+          "target_line": 20,
+          "reference_line": 20,
+          "ast_identical": true
+        },
+        {
+          "name": "LinearNormalizer.backward",
+          "target_line": 81,
+          "reference_line": 81,
+          "ast_identical": true
+        },
+        {
+          "name": "LinearNormalizer.forward",
+          "target_line": 71,
+          "reference_line": 71,
+          "ast_identical": true
+        },
+        {
+          "name": "LinearNormalizer.get_stats",
+          "target_line": 64,
+          "reference_line": 64,
+          "ast_identical": true
+        },
+        {
+          "name": "SingleFieldLinearNormalizer.__init__",
+          "target_line": 96,
+          "reference_line": 96,
+          "ast_identical": true
+        },
+        {
+          "name": "SingleFieldLinearNormalizer.backward",
+          "target_line": 131,
+          "reference_line": 131,
+          "ast_identical": true
+        },
+        {
+          "name": "SingleFieldLinearNormalizer.forward",
+          "target_line": 127,
+          "reference_line": 127,
+          "ast_identical": true
+        },
+        {
+          "name": "SingleFieldLinearNormalizer.get_stats",
+          "target_line": 124,
+          "reference_line": 124,
+          "ast_identical": true
+        },
+        {
+          "name": "load_dataset_stats_from_json",
+          "target_line": 154,
+          "reference_line": 154,
+          "ast_identical": true
+        },
+        {
+          "name": "save_dataset_stats_to_json",
+          "target_line": 135,
+          "reference_line": 135,
+          "ast_identical": true
+        },
+        {
+          "name": "search_dataset_stats_cache_json",
+          "target_line": 199,
+          "reference_line": 199,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/datasets/lerobot/transforms/action_state_merger.py",
+      "target_sha256": "669d6991415fc5eca44b32b129d15fee1e06e2f17d59d90350c252598033b427",
+      "reference_sha256": "669d6991415fc5eca44b32b129d15fee1e06e2f17d59d90350c252598033b427",
+      "text_identical": true,
+      "functions": [
+        {
+          "name": "ConcatLeftAlign.__init__",
+          "target_line": 8,
+          "reference_line": 8,
+          "ast_identical": true
+        },
+        {
+          "name": "ConcatLeftAlign._concat",
+          "target_line": 63,
+          "reference_line": 63,
+          "ast_identical": true
+        },
+        {
+          "name": "ConcatLeftAlign._crop",
+          "target_line": 56,
+          "reference_line": 56,
+          "ast_identical": true
+        },
+        {
+          "name": "ConcatLeftAlign._pad",
+          "target_line": 44,
+          "reference_line": 44,
+          "ast_identical": true
+        },
+        {
+          "name": "ConcatLeftAlign._split",
+          "target_line": 69,
+          "reference_line": 69,
+          "ast_identical": true
+        },
+        {
+          "name": "ConcatLeftAlign.backward",
+          "target_line": 30,
+          "reference_line": 30,
+          "ast_identical": true
+        },
+        {
+          "name": "ConcatLeftAlign.forward",
+          "target_line": 20,
+          "reference_line": 20,
+          "ast_identical": true
+        },
+        {
+          "name": "ConcatLeftAlign.set_shape_meta",
+          "target_line": 16,
+          "reference_line": 16,
+          "ast_identical": true
+        }
+      ]
+    },
+    {
+      "file": "src/fastwam/utils/pytorch_utils.py",
+      "target_sha256": "ffc483e7fb435cd654326750eaffdbfc9243837c3140dcc74e45b24abb751a33",
+      "reference_sha256": "ffc483e7fb435cd654326750eaffdbfc9243837c3140dcc74e45b24abb751a33",
+      "text_identical": true,
+      "functions": [
+        {
+          "name": "_resolve_global_rank",
+          "target_line": 11,
+          "reference_line": 11,
+          "ast_identical": true
+        },
+        {
+          "name": "dict_apply",
+          "target_line": 72,
+          "reference_line": 72,
+          "ast_identical": true
+        },
+        {
+          "name": "dict_apply_reduce",
+          "target_line": 107,
+          "reference_line": 107,
+          "ast_identical": true
+        },
+        {
+          "name": "dict_apply_split",
+          "target_line": 95,
+          "reference_line": 95,
+          "ast_identical": true
+        },
+        {
+          "name": "dict_to_array",
+          "target_line": 85,
+          "reference_line": 85,
+          "ast_identical": true
+        },
+        {
+          "name": "is_rank0",
+          "target_line": 124,
+          "reference_line": 124,
+          "ast_identical": true
+        },
+        {
+          "name": "optimizer_to",
+          "target_line": 117,
+          "reference_line": 117,
+          "ast_identical": true
+        },
+        {
+          "name": "pad_remaining_dims",
+          "target_line": 90,
+          "reference_line": 90,
+          "ast_identical": true
+        },
+        {
+          "name": "set_global_seed",
+          "target_line": 17,
+          "reference_line": 17,
+          "ast_identical": true
+        },
+        {
+          "name": "worker_init_function",
+          "target_line": 37,
+          "reference_line": 37,
+          "ast_identical": true
+        }
+      ]
+    }
+  ]
+}

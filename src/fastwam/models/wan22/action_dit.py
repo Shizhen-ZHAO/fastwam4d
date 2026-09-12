@@ -53,8 +53,13 @@ class ActionDiT(nn.Module):
         attn_head_dim: int,
         num_layers: int,
         use_gradient_checkpointing: bool = False,
+        action_rope_mode: str = "1d",
     ):
         super().__init__()
+        # 当前对齐基线只支持 1d；显式配置，防止误用参考版其他 RoPE 模式。
+        if action_rope_mode != "1d":
+            raise ValueError(f"This ActionDiT requires action_rope_mode='1d', got {action_rope_mode!r}")
+        self.action_rope_mode = action_rope_mode
         self.hidden_dim = hidden_dim
         self.action_dim = action_dim
         self.ffn_dim = ffn_dim

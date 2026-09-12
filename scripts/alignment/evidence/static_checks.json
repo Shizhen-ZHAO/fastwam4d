@@ -1,0 +1,37 @@
+{
+  "scope": "AST、shell语法、文档bash语法及git whitespace；无真实数据/GPU",
+  "python_files": [
+    "experiments/libero/eval_libero_single.py",
+    "experiments/libero/libero_utils.py",
+    "experiments/libero/run_libero_manager.py",
+    "scripts/alignment/_trace.py",
+    "scripts/alignment/check_assets.py",
+    "scripts/alignment/check_configs.py",
+    "scripts/alignment/check_eval_configs.py",
+    "scripts/alignment/check_eval_pipeline.py",
+    "scripts/alignment/check_inference_parity.py",
+    "scripts/alignment/check_model_parity.py",
+    "scripts/alignment/check_trace.py",
+    "scripts/alignment/compare_traces.py",
+    "scripts/alignment/prepare_stats.py",
+    "scripts/alignment/run_pair.py",
+    "scripts/alignment/train_with_trace.py",
+    "src/fastwam/models/wan22/action_dit.py",
+    "src/fastwam/models/wan22/fastwam.py",
+    "src/fastwam/models/wan22/fastwam_idm.py",
+    "src/fastwam/models/wan22/wan_video_vae.py",
+    "src/fastwam/runtime.py",
+    "src/fastwam/trainer.py"
+  ],
+  "shell_files": [
+    "scripts/eval_libero.sh",
+    "scripts/libero_cluster_paths.sh",
+    "scripts/train_libero_16gpu_common.sh",
+    "scripts/train_libero_idm_16gpu.sh",
+    "scripts/train_libero_joint_16gpu.sh",
+    "scripts/train_libero_uncond_16gpu.sh"
+  ],
+  "documentation_bash_blocks": 21,
+  "git_diff_check": true,
+  "reference_clean": true
+}

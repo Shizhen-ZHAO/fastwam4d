@@ -1,0 +1,26 @@
+{
+  "scope": "reference source/actual shell and Hydra; fake asset file probes; no actual cluster dataset/GPU",
+  "paths": {
+    "REPO_ROOT": "/Users/henryx/Desktop/project/project/FastWAM",
+    "ACTION_DIT_CHECKPOINT": "/Users/henryx/Desktop/project/project/FastWAM/checkpoints/ActionDiT_linear_interp_Wan22_alphascale_1024hdim.pt",
+    "TEXT_CACHE": "/Users/henryx/Desktop/project/project/FastWAM/data/text_embeds_cache/libero",
+    "DATASET_STATS": "null",
+    "MODEL_BASE": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints",
+    "MODEL_ID": "Wan2.2-TI2V-5B",
+    "TOKENIZER_MODEL_ID": "/new_interaction_group/common_models/Wan-AI__Wan2.1-I2V-14B-480P",
+    "WAN_CHECKPOINT_DIR": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/Wan2.2-TI2V-5B",
+    "FASTWAM_ENV": "",
+    "CUDA_HOME": ""
+  },
+  "reference_stats_algorithm_ast_identical": true,
+  "train_null_stats_allowed": true,
+  "eval_null_stats_resolves_beside_checkpoint": true,
+  "explicit_missing_stats_rejected": true,
+  "pair_requires_prepared_shared_stats": true,
+  "prepare_stats_hydra_config_valid": true,
+  "pair_dry_run_topologies": [
+    "1x16",
+    "2x8"
+  ],
+  "actual_stats_calculation_executed": false
+}

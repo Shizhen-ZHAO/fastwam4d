@@ -1,0 +1,574 @@
+{
+  "scope": "CPU float32，两层模型，实际小VAE和原始training_loss，多步AdamW；无真实资产、CUDA、DeepSpeed或数据解码",
+  "torch": "2.7.1",
+  "cases": [
+    {
+      "variant": "uncond",
+      "batch": 1,
+      "gas": 2,
+      "idm_cond_noise_prob": null,
+      "initial_parameter_tensors": 287,
+      "updates": 4,
+      "parameter_max_abs_diff_after_each_update": 0.0,
+      "losses": [
+        {
+          "update": 1,
+          "microbatch": 1,
+          "loss": 1.6851952075958252,
+          "metrics": {
+            "loss_video": 1.3781923055648804,
+            "loss_action": 0.3070029020309448
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 1,
+          "microbatch": 2,
+          "loss": 1.537428617477417,
+          "metrics": {
+            "loss_video": 1.417814016342163,
+            "loss_action": 0.11961465328931808
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 2,
+          "microbatch": 1,
+          "loss": 0.8442526459693909,
+          "metrics": {
+            "loss_video": 0.2976109981536865,
+            "loss_action": 0.5466416478157043
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 2,
+          "microbatch": 2,
+          "loss": 2.773379325866699,
+          "metrics": {
+            "loss_video": 2.657066583633423,
+            "loss_action": 0.11631285399198532
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 3,
+          "microbatch": 1,
+          "loss": 2.7370214462280273,
+          "metrics": {
+            "loss_video": 1.7830560207366943,
+            "loss_action": 0.9539654850959778
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 3,
+          "microbatch": 2,
+          "loss": 5.655390739440918,
+          "metrics": {
+            "loss_video": 1.1079835891723633,
+            "loss_action": 4.547407150268555
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 4,
+          "microbatch": 1,
+          "loss": 6.134397029876709,
+          "metrics": {
+            "loss_video": 1.7464699745178223,
+            "loss_action": 4.387927055358887
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 4,
+          "microbatch": 2,
+          "loss": 0.601319432258606,
+          "metrics": {
+            "loss_video": 0.2209150344133377,
+            "loss_action": 0.38040441274642944
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "variant": "uncond",
+      "batch": 2,
+      "gas": 2,
+      "idm_cond_noise_prob": null,
+      "initial_parameter_tensors": 287,
+      "updates": 4,
+      "parameter_max_abs_diff_after_each_update": 0.0,
+      "losses": [
+        {
+          "update": 1,
+          "microbatch": 1,
+          "loss": 2.8582749366760254,
+          "metrics": {
+            "loss_video": 1.0726292133331299,
+            "loss_action": 1.785645842552185
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 1,
+          "microbatch": 2,
+          "loss": 1.4621268510818481,
+          "metrics": {
+            "loss_video": 0.5188397169113159,
+            "loss_action": 0.9432871341705322
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 2,
+          "microbatch": 1,
+          "loss": 3.8487582206726074,
+          "metrics": {
+            "loss_video": 1.047089695930481,
+            "loss_action": 2.801668405532837
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 2,
+          "microbatch": 2,
+          "loss": 5.386112689971924,
+          "metrics": {
+            "loss_video": 2.936816692352295,
+            "loss_action": 2.449295997619629
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 3,
+          "microbatch": 1,
+          "loss": 6.00294303894043,
+          "metrics": {
+            "loss_video": 1.7389347553253174,
+            "loss_action": 4.264008522033691
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 3,
+          "microbatch": 2,
+          "loss": 3.0113446712493896,
+          "metrics": {
+            "loss_video": 0.9024450778961182,
+            "loss_action": 2.1088995933532715
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 4,
+          "microbatch": 1,
+          "loss": 1.8786838054656982,
+          "metrics": {
+            "loss_video": 0.9482336044311523,
+            "loss_action": 0.9304502010345459
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 4,
+          "microbatch": 2,
+          "loss": 6.429244041442871,
+          "metrics": {
+            "loss_video": 2.616572856903076,
+            "loss_action": 3.812671184539795
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "variant": "joint",
+      "batch": 1,
+      "gas": 1,
+      "idm_cond_noise_prob": null,
+      "initial_parameter_tensors": 287,
+      "updates": 4,
+      "parameter_max_abs_diff_after_each_update": 0.0,
+      "losses": [
+        {
+          "update": 1,
+          "microbatch": 1,
+          "loss": 1.684989094734192,
+          "metrics": {
+            "loss_video": 1.3781923055648804,
+            "loss_action": 0.3067968189716339
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 2,
+          "microbatch": 1,
+          "loss": 1.5337351560592651,
+          "metrics": {
+            "loss_video": 1.4142521619796753,
+            "loss_action": 0.11948304623365402
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 3,
+          "microbatch": 1,
+          "loss": 0.8443957567214966,
+          "metrics": {
+            "loss_video": 0.2969115078449249,
+            "loss_action": 0.547484278678894
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 4,
+          "microbatch": 1,
+          "loss": 2.7641050815582275,
+          "metrics": {
+            "loss_video": 2.6479058265686035,
+            "loss_action": 0.11619934439659119
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "variant": "joint",
+      "batch": 2,
+      "gas": 1,
+      "idm_cond_noise_prob": null,
+      "initial_parameter_tensors": 287,
+      "updates": 4,
+      "parameter_max_abs_diff_after_each_update": 0.0,
+      "losses": [
+        {
+          "update": 1,
+          "microbatch": 1,
+          "loss": 2.8585102558135986,
+          "metrics": {
+            "loss_video": 1.0726292133331299,
+            "loss_action": 1.7858810424804688
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 2,
+          "microbatch": 1,
+          "loss": 1.460773229598999,
+          "metrics": {
+            "loss_video": 0.5173671245574951,
+            "loss_action": 0.9434060454368591
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 3,
+          "microbatch": 1,
+          "loss": 3.850370168685913,
+          "metrics": {
+            "loss_video": 1.046273946762085,
+            "loss_action": 2.804096221923828
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 4,
+          "microbatch": 1,
+          "loss": 5.369023323059082,
+          "metrics": {
+            "loss_video": 2.9224202632904053,
+            "loss_action": 2.446603298187256
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "variant": "idm",
+      "batch": 1,
+      "gas": 1,
+      "idm_cond_noise_prob": 0.5,
+      "initial_parameter_tensors": 287,
+      "updates": 4,
+      "parameter_max_abs_diff_after_each_update": 0.0,
+      "losses": [
+        {
+          "update": 1,
+          "microbatch": 1,
+          "loss": 1.6853245496749878,
+          "metrics": {
+            "loss_video": 1.3781923055648804,
+            "loss_action": 0.3071322739124298
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 2,
+          "microbatch": 1,
+          "loss": 4.456481456756592,
+          "metrics": {
+            "loss_video": 3.058070421218872,
+            "loss_action": 1.3984109163284302
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 3,
+          "microbatch": 1,
+          "loss": 4.01174259185791,
+          "metrics": {
+            "loss_video": 2.894341230392456,
+            "loss_action": 1.1174015998840332
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 4,
+          "microbatch": 1,
+          "loss": 4.086274147033691,
+          "metrics": {
+            "loss_video": 1.23665452003479,
+            "loss_action": 2.8496196269989014
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "variant": "idm",
+      "batch": 2,
+      "gas": 1,
+      "idm_cond_noise_prob": 0.5,
+      "initial_parameter_tensors": 287,
+      "updates": 4,
+      "parameter_max_abs_diff_after_each_update": 0.0,
+      "losses": [
+        {
+          "update": 1,
+          "microbatch": 1,
+          "loss": 2.858442544937134,
+          "metrics": {
+            "loss_video": 1.0726292133331299,
+            "loss_action": 1.785813331604004
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 2,
+          "microbatch": 1,
+          "loss": 3.145284652709961,
+          "metrics": {
+            "loss_video": 2.0194554328918457,
+            "loss_action": 1.1258293390274048
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 3,
+          "microbatch": 1,
+          "loss": 2.897681713104248,
+          "metrics": {
+            "loss_video": 2.0886313915252686,
+            "loss_action": 0.8090503811836243
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 4,
+          "microbatch": 1,
+          "loss": 4.215512752532959,
+          "metrics": {
+            "loss_video": 2.5332565307617188,
+            "loss_action": 1.6822562217712402
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "variant": "idm",
+      "batch": 2,
+      "gas": 1,
+      "idm_cond_noise_prob": 0.0,
+      "initial_parameter_tensors": 287,
+      "updates": 4,
+      "parameter_max_abs_diff_after_each_update": 0.0,
+      "losses": [
+        {
+          "update": 1,
+          "microbatch": 1,
+          "loss": 2.858461856842041,
+          "metrics": {
+            "loss_video": 1.0726292133331299,
+            "loss_action": 1.7858325242996216
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 2,
+          "microbatch": 1,
+          "loss": 3.9635133743286133,
+          "metrics": {
+            "loss_video": 2.197021722793579,
+            "loss_action": 1.7664915323257446
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 3,
+          "microbatch": 1,
+          "loss": 1.6597272157669067,
+          "metrics": {
+            "loss_video": 1.1242413520812988,
+            "loss_action": 0.5354858636856079
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 4,
+          "microbatch": 1,
+          "loss": 1.9745477437973022,
+          "metrics": {
+            "loss_video": 0.7300174236297607,
+            "loss_action": 1.2445303201675415
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        }
+      ]
+    },
+    {
+      "variant": "idm",
+      "batch": 2,
+      "gas": 1,
+      "idm_cond_noise_prob": 1.0,
+      "initial_parameter_tensors": 287,
+      "updates": 4,
+      "parameter_max_abs_diff_after_each_update": 0.0,
+      "losses": [
+        {
+          "update": 1,
+          "microbatch": 1,
+          "loss": 2.8584766387939453,
+          "metrics": {
+            "loss_video": 1.0726292133331299,
+            "loss_action": 1.7858474254608154
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 2,
+          "microbatch": 1,
+          "loss": 3.1452248096466064,
+          "metrics": {
+            "loss_video": 2.019428253173828,
+            "loss_action": 1.1257965564727783
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 3,
+          "microbatch": 1,
+          "loss": 2.8982768058776855,
+          "metrics": {
+            "loss_video": 2.0885982513427734,
+            "loss_action": 0.8096784353256226
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        },
+        {
+          "update": 4,
+          "microbatch": 1,
+          "loss": 3.57255482673645,
+          "metrics": {
+            "loss_video": 1.3107950687408447,
+            "loss_action": 2.2617597579956055
+          },
+          "loss_max_abs_diff": 0.0,
+          "gradient_tensors": 139,
+          "gradient_max_abs_diff": 0.0
+        }
+      ]
+    }
+  ]
+}

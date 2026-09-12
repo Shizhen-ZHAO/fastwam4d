@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "comparison": "exact; zero tolerance",
+  "ranks": 16,
+  "microbatch_records_compared": 128,
+  "max_loss_absolute_difference": 0.0,
+  "updates": [
+    {
+      "step": 1,
+      "mean_local_microbatch_loss": 1.9474906250834465
+    },
+    {
+      "step": 2,
+      "mean_local_microbatch_loss": 4.814641490578651
+    },
+    {
+      "step": 3,
+      "mean_local_microbatch_loss": 2.944764271378517
+    },
+    {
+      "step": 4,
+      "mean_local_microbatch_loss": 1.9064774736762047
+    },
+    {
+      "step": 5,
+      "mean_local_microbatch_loss": 2.1369818598031998
+    },
+    {
+      "step": 6,
+      "mean_local_microbatch_loss": 2.1870140582323074
+    },
+    {
+      "step": 7,
+      "mean_local_microbatch_loss": 2.1547622680664062
+    },
+    {
+      "step": 8,
+      "mean_local_microbatch_loss": 1.98618745803833
+    }
+  ]
+}

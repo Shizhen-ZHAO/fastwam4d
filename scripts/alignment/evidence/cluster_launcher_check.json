@@ -1,0 +1,10 @@
+{
+  "scope": "统一脚本、假的资产文件与路径失败探针；无真实checkpoint、GPU或数据解码",
+  "three_train_entry_scripts_identical_except_task": true,
+  "asset_fixture_modes_pass": [
+    "train",
+    "eval",
+    "text"
+  ],
+  "missing_cache_rejected": true
+}

@@ -3,6 +3,20 @@ set -euo pipefail
 # Shared launcher; invoke a variant script, not this file directly.
 TASK="${1:?Use train_libero_joint_16gpu.sh, train_libero_uncond_16gpu.sh or train_libero_idm_16gpu.sh}"
 shift
+source "$(dirname "${BASH_SOURCE[0]}")/libero_cluster_paths.sh"
+case "${TASK}" in
+  libero_uncond_2cam224_1e-4) VARIANT=uncond; DEFAULT_BATCH=4; DEFAULT_ACCUM=2 ;;
+  libero_joint_2cam224_1e-4) VARIANT=joint; DEFAULT_BATCH=8; DEFAULT_ACCUM=1 ;;
+  libero_idm_2cam224_1e-4) VARIANT=idm; DEFAULT_BATCH=8; DEFAULT_ACCUM=1 ;;
+  *) echo "Unsupported LIBERO task: ${TASK}" >&2; exit 2 ;;
+esac
+# 三个入口共用全部设置，仅 task、输出目录、参考配方的 batch/GAS 不同。
+export OUTPUT_DIR="${OUTPUT_DIR:-${REPO_ROOT}/runs/libero_${VARIANT}_16gpu/${RUN_ID:-$(date +%Y-%m-%d_%H-%M-%S)}}"
+export RESUME_STATE="${RESUME_STATE:-null}"
+export NNODES="${NNODES:-1}" GPUS_PER_NODE="${GPUS_PER_NODE:-16}"
+export NODE_RANK="${NODE_RANK:-0}" MASTER_PORT="${MASTER_PORT:-29500}"
+export BATCH_SIZE="${BATCH_SIZE:-${DEFAULT_BATCH}}" GRAD_ACCUM="${GRAD_ACCUM:-${DEFAULT_ACCUM}}"
+export NUM_WORKERS="${NUM_WORKERS:-8}" MAX_STEPS="${MAX_STEPS:-null}"
 for value in "${NNODES}" "${GPUS_PER_NODE}" "${NODE_RANK}" "${MASTER_PORT}"; do
   [[ "${value}" =~ ^(0|[1-9][0-9]*)$ ]] || { echo "Invalid integer: ${value}" >&2; exit 2; }
 done
@@ -18,8 +32,11 @@ else
   RUN_ID="${RUN_ID:-$(date +%Y-%m-%d_%H-%M-%S)}"
 fi
 export RUN_ID CUDA_HOME
-export PATH="${FASTWAM_ENV}/bin:${CUDA_HOME}/bin:${PATH}"
-export LD_LIBRARY_PATH="${FASTWAM_ENV}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+if [[ -n "${CUDA_HOME}" ]]; then export PATH="${CUDA_HOME}/bin:${PATH}"; fi
+if [[ -n "${FASTWAM_ENV}" ]]; then
+  export PATH="${FASTWAM_ENV}/bin:${PATH}"
+  export LD_LIBRARY_PATH="${FASTWAM_ENV}/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+fi
 export PYTHONPATH="${REPO_ROOT}/src:${REPO_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
 export DIFFSYNTH_MODEL_BASE_PATH="${MODEL_BASE}"
 export DIFFSYNTH_SKIP_DOWNLOAD=true
@@ -54,8 +71,12 @@ command=(
   "num_workers=${NUM_WORKERS}"
   "max_steps=${MAX_STEPS}"
   "wandb.name=${TASK}"
-  "$@"
 )
+# 同一套参数可指向参考版平铺权重目录，仍保留末尾 Hydra 参数的最高优先级。
+if [[ -n "${MODEL_ID:-}" ]]; then command+=("model.model_id=${MODEL_ID}"); fi
+if [[ -n "${TOKENIZER_MODEL_ID:-}" ]]; then command+=("model.tokenizer_model_id=${TOKENIZER_MODEL_ID}"); fi
+if [[ -n "${REDIRECT_COMMON_FILES:-}" ]]; then command+=("model.redirect_common_files=${REDIRECT_COMMON_FILES}"); fi
+command+=("$@")
 # Print the command only: no training or GPU access.
 if [[ "${DRY_RUN:-0}" == "1" ]]; then
   printf '%q ' "${command[@]}"

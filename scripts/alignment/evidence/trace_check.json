@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "comparison": "exact; zero tolerance",
+  "ranks": 1,
+  "microbatch_records_compared": 8,
+  "max_loss_absolute_difference": 0.0,
+  "updates": [
+    {
+      "step": 1,
+      "mean_local_microbatch_loss": 0.44438794255256653
+    },
+    {
+      "step": 2,
+      "mean_local_microbatch_loss": 0.7681616246700287
+    },
+    {
+      "step": 3,
+      "mean_local_microbatch_loss": 0.260105162858963
+    },
+    {
+      "step": 4,
+      "mean_local_microbatch_loss": 0.6337464451789856
+    }
+  ],
+  "passive_trace_matches_plain_training": true,
+  "detects_1e_10_loss_difference": true,
+  "detects_parameter_difference": true,
+  "rejects_incomplete_trace": true,
+  "scope": "CPU toy trainer；实际autograd/AdamW/随机流，非DeepSpeed集成测试"
+}

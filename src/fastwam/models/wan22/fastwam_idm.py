@@ -13,7 +13,8 @@ logger = get_logger(__name__)
 class FastWAMIDM(FastWAMJoint):
     """IDM variant with teacher-forcing video conditioning for action denoising."""
 
-    video_cond_noise_prob: float
+    # 与参考版直接构造及预训练工厂的默认行为一致。
+    video_cond_noise_prob: float = 0.5
 
     @classmethod
     def from_wan22_pretrained(cls, *, video_cond_noise_prob: float = 0.5, **kwargs):

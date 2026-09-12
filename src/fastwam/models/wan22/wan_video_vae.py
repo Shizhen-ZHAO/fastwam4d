@@ -1219,10 +1219,13 @@ class WanVideoVAE(nn.Module):
 
 
     def encode(self, videos, device, tiled=False, tile_size=(34, 34), tile_stride=(18, 16)):
-        raise NotImplementedError(
-            "WanVideoVAE.encode() legacy per-video loop is disabled. "
-            "Call `vae.model.encode(batched_video, vae.scale)` for fixed-shape batched encode."
-        )
+        if tiled:
+            raise NotImplementedError("Tiled encoding is not allowed yet.")
+        hidden_states = []
+        for video in videos:
+            hidden_state = self.single_encode(video.unsqueeze(0), device)
+            hidden_states.append(hidden_state.squeeze(0))
+        return torch.stack(hidden_states)
 
 
     def decode(self, hidden_states, device, tiled=False, tile_size=(34, 34), tile_stride=(18, 16)):

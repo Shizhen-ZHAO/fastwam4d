@@ -1,0 +1,12 @@
+{
+  "single": {
+    "commands": 6,
+    "hydra_composed_all_roles": true,
+    "output_created": false
+  },
+  "two_nodes": {
+    "commands": 6,
+    "hydra_composed_all_roles": true,
+    "output_created": false
+  }
+}

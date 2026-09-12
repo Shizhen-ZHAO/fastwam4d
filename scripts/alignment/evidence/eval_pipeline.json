@@ -1,0 +1,115 @@
+{
+  "scope": "AST/真实 Python 函数 + 假环境；无 CUDA、LIBERO 或真实模型权重",
+  "identical_eval_functions": [
+    "_center_crop_resize",
+    "_normalize_proprio",
+    "_obs_to_model_input",
+    "_extract_sim_state",
+    "_denormalize_action",
+    "_get_num_video_frames",
+    "_get_max_steps",
+    "_resolve_dataset_stats_path",
+    "_load_model_checkpoint"
+  ],
+  "eval_source_resolution_with_other_installation": [
+    {
+      "repo": "FastWAM",
+      "selected_local_repo": true,
+      "origin": "/Users/henryx/Desktop/project/project/FastWAM/src/fastwam/__init__.py"
+    },
+    {
+      "repo": "fastwam4d_pp",
+      "selected_local_repo": true,
+      "origin": "/Users/henryx/Desktop/project/project/fastwam4d_pp/src/fastwam/__init__.py"
+    }
+  ],
+  "stats_resolution": [
+    {
+      "repo": "FastWAM",
+      "missing_explicit_path_falls_back": true
+    },
+    {
+      "repo": "fastwam4d_pp",
+      "missing_explicit_path_falls_back": true
+    }
+  ],
+  "official_existing_result": {
+    "old_result_is_accepted_without_ckpt_or_trial_check": true
+  },
+  "official_queue_orphan_lock": {
+    "crash_exit_code": 99,
+    "lock_directory_survived": true,
+    "next_operation_blocked_until_probe_timeout": true
+  },
+  "rollout_control_flow_parity": [
+    {
+      "wait_steps": 0,
+      "identical_consumed_frames_seeds_actions_and_done": true,
+      "consumed": [
+        [
+          1,
+          42
+        ],
+        [
+          11,
+          42
+        ],
+        [
+          21,
+          42
+        ]
+      ],
+      "render_calls": [
+        25,
+        25,
+        4
+      ]
+    },
+    {
+      "wait_steps": 1,
+      "identical_consumed_frames_seeds_actions_and_done": true,
+      "consumed": [
+        [
+          2,
+          42
+        ],
+        [
+          12,
+          42
+        ],
+        [
+          22,
+          42
+        ]
+      ],
+      "render_calls": [
+        26,
+        26,
+        5
+      ]
+    },
+    {
+      "wait_steps": 30,
+      "identical_consumed_frames_seeds_actions_and_done": true,
+      "consumed": [
+        [
+          31,
+          42
+        ],
+        [
+          41,
+          42
+        ],
+        [
+          51,
+          42
+        ]
+      ],
+      "render_calls": [
+        55,
+        55,
+        5
+      ]
+    }
+  ]
+}

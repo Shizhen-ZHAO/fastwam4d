@@ -24,6 +24,8 @@ def get_libero_env(task, resolution, seed, env_num=1):
         / task.problem_folder
         / task.bddl_file
     )
+    # 与参考版保持相同参数类型，也兼容需要字符串的 LIBERO wrapper。
+    task_bddl_file = str(task_bddl_file)
     env_args = {
         "bddl_file_name": task_bddl_file,
         "camera_heights": resolution,

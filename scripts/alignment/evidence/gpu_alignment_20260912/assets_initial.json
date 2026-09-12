@@ -1,0 +1,259 @@
+{
+  "mode": "train",
+  "scope": "file existence, basic JSON structure, prompt cache coverage; no GPU/model loading",
+  "paths": {
+    "MODEL_BASE": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints",
+    "MODEL_ID": "Wan2.2-TI2V-5B",
+    "REDIRECT_COMMON_FILES": "false",
+    "DATASET_STATS": "null",
+    "DATA_ROOT": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam",
+    "TEXT_CACHE": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero",
+    "ACTION_DIT_CHECKPOINT": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/ActionDiT_linear_interp_Wan22_alphascale_1024hdim.pt"
+  },
+  "checks": [
+    {
+      "file": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/Wan2.2-TI2V-5B/Wan2.2_VAE.pth",
+      "nonempty": true
+    },
+    {
+      "file": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/Wan2.2-TI2V-5B/diffusion_pytorch_model-00001-of-00003.safetensors",
+      "nonempty": true
+    },
+    {
+      "file": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/Wan2.2-TI2V-5B/diffusion_pytorch_model-00002-of-00003.safetensors",
+      "nonempty": true
+    },
+    {
+      "file": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/Wan2.2-TI2V-5B/diffusion_pytorch_model-00003-of-00003.safetensors",
+      "nonempty": true
+    },
+    {
+      "file": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/Wan2.2-TI2V-5B/diffusion_pytorch_model-00001-of-00003.safetensors",
+      "nonempty": true
+    },
+    {
+      "file": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/Wan2.2-TI2V-5B/diffusion_pytorch_model-00002-of-00003.safetensors",
+      "nonempty": true
+    },
+    {
+      "file": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/Wan2.2-TI2V-5B/diffusion_pytorch_model-00003-of-00003.safetensors",
+      "nonempty": true
+    },
+    {
+      "file": "/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/ActionDiT_linear_interp_Wan22_alphascale_1024hdim.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_spatial_no_noops_lerobot/meta/info.json",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_spatial_no_noops_lerobot/meta/episodes.jsonl",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_spatial_no_noops_lerobot/meta/tasks.jsonl",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_object_no_noops_lerobot/meta/info.json",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_object_no_noops_lerobot/meta/episodes.jsonl",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_object_no_noops_lerobot/meta/tasks.jsonl",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_goal_no_noops_lerobot/meta/info.json",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_goal_no_noops_lerobot/meta/episodes.jsonl",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_goal_no_noops_lerobot/meta/tasks.jsonl",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_10_no_noops_lerobot/meta/info.json",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_10_no_noops_lerobot/meta/episodes.jsonl",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/LIBERO-fastwam/libero_10_no_noops_lerobot/meta/tasks.jsonl",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/a867f9dc708a8c86dfe51d03407eb776c82b931a1f2d31b29bb8d13959cd1715.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/54cfec7c678b690d93e5b0c8f6405784e4c46170ef8c2188bea83593465b4538.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/629feafaa648290cb93891d49b47cc25c91db2a213229dac42650d1136e436f6.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/dc340178677f93d55501be4e8a0c0248683e65c23a79496ffa4cbc6a8325fb20.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/01d238c02894e2ca0b32fa35ef3578ef9d3b15e67923d92a06070172088c9570.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/c79f0873b6951c65e0ef87ed6059b5742b62148daa37a2c56f61ab5e31532a0e.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/24aecbd46251c2a9ffbf802772f36128be3f2cd93d4b7bd47146413fab05ba5c.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/d0dce65256d088fd689b23b418b5e3ddc20ac8b1af2b37d3ed5c03d4c36aded7.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/ece842ac1e55c8d0ae0e57499fe8d5a9c7d5b0022c4dffe46e7489e6d68e5d44.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/319500bfb667af12d60cc80d17849413986e367f197843542ae4b3e61575e747.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/f01416ec88f339d4ec91e366c6d9237d54ec52f641154d7f965c0f024e5b18e0.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/95a1ad5b127091a1d91bdd038ee1ad77d30971a5f9e0d80458899535cc35a7e4.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/4a04c8d94b67796ab0cabce05eec485683b9ed3393f3890d5adbffa9e11fcb33.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/e4d688bf20eee14b533476f8e8379de245476461dcf1d7a5e19415489f8fbeb9.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/b75715591c78b61ee4e9abf6a84eda0e63b04bd38514a0ebd207770d415357dc.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/bc931e023b7c119ab1f95f938fc2d43e176c2489ac95b77c4c25acc9f16fc230.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/016d7f2621b2c5bc672bd978145ad356ca7f33090fb804f664adc8572108a3f8.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/e4c6922ee3c035403de22dd1995e1592daf2128ae341431d32a8ed3514dfb32f.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/80908e271903fce9f86e3017e7873d80833c5a7d3109001d10a603496b69cc16.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/e80c9a30c2068375abc17bc850de9973176b58eb67914571c61af8bfbafa2fc8.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/9756c2597ba4be753c72d8fdfc7416e4bf8d5fb74886858face95ce3c61d50c9.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/32bfb425359e24286826d3e1798fe0f7f1d669448aacfd11380fa37abf01206d.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/f53d0e3f1071cebb3afc4eb9197c81304c7b1ebb56274e00d77ec9e0432ec651.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/1abddfb14c5258718c1a153ee5ae73c4ee61e73c786249a5f2a096aa4033370f.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/d5d6f37fc1c8d15053ce2a356e5e09ef36977a0dfe672f9393dcc6f5bd597352.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/4f93dc39fd7c885bf14d50d7db40823defd127f7df28071700e2791d3bf22dd5.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/53bde11d507045010a731dc81bb02e80859e58b9315a8b303b5d0fd6f9b561ef.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/84727b22433531438a399799d28d16d49fc56ec7ab0a4cf6a827ea7b2347df35.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/fe5b483ce54fd0b450d3504eacf0f05018a50ab184fa53c7e2744b8a52e957cf.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/4659b13576ca907ddfe4dde5e7d25a8a54a9cd4fb86f5188989dfef12345cee7.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/8c52c0b2686805189271ba4fb0b1186b9df1cacbc6621688392e31dc1c2953ee.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/00f3d894acf1335006ccfe386e65360aab7ecb0e621c387d444986b803601de2.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/3e26a5969a924414e67523a68f2a376d953265209b9babd61c7355a8e5bb25e3.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/517025c832018e9c689a3982853b7745b52cadd7a6cfb10e3f6476844aabedbe.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/fd92daee5b46a4b3dd8426ff9cceea75d709cee1c7b19244b1026205cc33ba3c.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/6a016a5ebc75ddd1cd48f8b688af0b7eb09eb3fbcafd6aceb32bf8c6d19b5c06.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/3552470a97d69164e24f87bf13af4951e3fa8aef415e74e3e87baf58e6f876b3.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/88251b67639631ce11c41f703e85001fff4b505e1eafcc355389e15e15da67ee.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/2fc5af234d41c6a16e1d55152dc1c8fdf5d2cef810b7cacb83a3f95275108bd7.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    },
+    {
+      "file": "/new-interaction/share/user_folder/jiahao.ljh/data/fastwam-text-emb/libero/ab4a7b38cafc00cd4f08f4a3c1937ae369dc1b6d59f77f7554999d2720177ce1.t5_len128.wan22ti2v5b.pt",
+      "nonempty": true
+    }
+  ],
+  "errors": [],
+  "stats_source": "calculate from training data at startup",
+  "unique_prompt_count": 40,
+  "passed": true
+}

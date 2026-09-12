@@ -35,6 +35,7 @@ video_dit_config:
   action_group_causal_mask_mode: "group_diagonal"
 
 action_dit_config:
+  action_rope_mode: 1d
   action_dim: ${data.train.processor.action_output_dim}
   hidden_dim: 1024
   ffn_dim: 4096

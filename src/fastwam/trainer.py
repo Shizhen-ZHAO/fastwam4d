@@ -3,6 +3,7 @@ import json
 import inspect
 import os
 import re
+import shutil
 from math import ceil
 from pathlib import Path
 import time
@@ -10,6 +11,7 @@ import time
 import numpy as np
 import torch
 from accelerate import Accelerator
+from accelerate.utils import DistributedType, GradientAccumulationPlugin
 from omegaconf import DictConfig
 from PIL import Image
 from torch.optim.lr_scheduler import ConstantLR, CosineAnnealingLR, LinearLR, SequentialLR
@@ -41,6 +43,7 @@ class Wan22Trainer:
         self.max_steps = int(max_steps) if max_steps is not None else None
         self.log_every = int(cfg.log_every)
         self.save_every = int(cfg.save_every)
+        self.keep_last_ckpts = int(cfg.get("keep_last_ckpts", 0))
         self.eval_every = int(cfg.eval_every)
         self.eval_num_inference_steps = int(cfg.eval_num_inference_steps)
         self.gradient_accumulation_steps = int(cfg.gradient_accumulation_steps)
@@ -57,15 +60,24 @@ class Wan22Trainer:
         self.wandb_enabled = bool(cfg.wandb.enabled)
 
         self.accelerator = Accelerator(
-            gradient_accumulation_steps=self.gradient_accumulation_steps,
+            gradient_accumulation_plugin=GradientAccumulationPlugin(
+                num_steps=self.gradient_accumulation_steps,
+                sync_with_dataloader=False,
+                sync_each_batch=True,
+            ),
             mixed_precision=self.mixed_precision,
             step_scheduler_with_optimizer=False,
         )
         
+        ds_plugin = getattr(self.accelerator.state, "deepspeed_plugin", None)
+        zero_stage = (
+            ds_plugin.deepspeed_config.get("zero_optimization", {}).get("stage", "unknown")
+            if ds_plugin is not None else "n/a"
+        )
         logger.info(
             "Accelerate training: distributed_type=%s zero_stage=%s world_size=%d process_index=%d cfg_mixed_precision=%s accelerator_mixed_precision=%s grad_accum=%d grad_clip=%.4f",
             self.accelerator.distributed_type,
-            self.accelerator.state.deepspeed_plugin.deepspeed_config.get("zero_optimization", {}).get("stage", "unknown"),
+            zero_stage,
             self.accelerator.num_processes,
             self.accelerator.process_index,
             self.mixed_precision,
@@ -106,7 +118,7 @@ class Wan22Trainer:
         self.epoch = 0
         self.batch_in_epoch = 0
 
-        self.checkpoint_root = os.path.join(self.output_dir, "checkpoints")
+        self.checkpoint_root = os.environ.get("FASTWAM_CKPT_DIR") or os.path.join(self.output_dir, "checkpoints")
         self.weights_dir = os.path.join(self.checkpoint_root, "weights")
         self.state_dir = os.path.join(self.checkpoint_root, "state")
         self.eval_dir = os.path.join(self.output_dir, "eval")
@@ -546,7 +558,10 @@ class Wan22Trainer:
             self.eval_dir,
             f"step_{self.global_step:06d}_rank_{self.accelerator.process_index:03d}.mp4",
         )
-        save_mp4(stitched_frames, video_path, fps=8)
+        try:
+            save_mp4(stitched_frames, video_path, fps=8)
+        except Exception as exc:
+            logger.warning("Eval video write failed, metrics unaffected: %s", exc)
 
         local_metrics = torch.tensor(
             [
@@ -619,7 +634,48 @@ class Wan22Trainer:
             self._save_trainer_state(state_path)
         self.accelerator.wait_for_everyone()
 
+        # 清理只保留最近 N 个，必须在 wait_for_everyone 之后由 main process 执行，
+        # 保证所有 rank 已完成本轮 state 写入，避免误删仍在写的内容。
+        if self.accelerator.is_main_process and self.keep_last_ckpts > 0:
+            self._prune_old_checkpoints()
+        self.accelerator.wait_for_everyone()
+
         return {"weights_path": ckpt_path, "state_path": state_path}
+
+    def _prune_old_checkpoints(self):
+        """只保留最近 keep_last_ckpts 个 ckpt（weights + state），删除更早的。
+
+        weights 是 checkpoints/weights/step_%06d.pt，state 是
+        checkpoints/state/step_%06d/ 目录；步号零填充，按数字排序即时间顺序。
+        """
+        weights_re = re.compile(r"^step_(\d+)\.pt$")
+        state_re = re.compile(r"^step_(\d+)$")
+
+        def _step_entries(root: str, pattern) -> list[tuple[int, str]]:
+            if not os.path.isdir(root):
+                return []
+            found = []
+            for name in os.listdir(root):
+                m = pattern.fullmatch(name)
+                if m:
+                    found.append((int(m.group(1)), os.path.join(root, name)))
+            found.sort(key=lambda x: x[0])
+            return found
+
+        stale = []
+        for root, pattern, remove in (
+            (self.weights_dir, weights_re, os.remove),
+            (self.state_dir, state_re, shutil.rmtree),
+        ):
+            entries = _step_entries(root, pattern)
+            for _, path in entries[:-self.keep_last_ckpts]:
+                remove(path)
+                stale.append(path)
+        if stale:
+            logger.info(
+                "[ckpt-prune] keep_last=%d 删除 %d 个旧 checkpoint: %s",
+                self.keep_last_ckpts, len(stale), ", ".join(stale),
+            )
 
     def load_training_state(self, state_dir: str):
         self.accelerator.load_state(input_dir=state_dir)
@@ -691,34 +747,45 @@ class Wan22Trainer:
                 continue
 
             with self.accelerator.accumulate(self.model):
-                train_model = self.model if hasattr(self.model, "training_loss") else self.accelerator.unwrap_model(self.model)
-
-                with self.accelerator.autocast():
-                    loss, loss_dict = train_model.training_loss(sample)
+                # 对齐 fastwam4d_pp 的现有调用方式；不单侧改变 DS 的累积语义。
+                if self.accelerator.distributed_type == DistributedType.MULTI_GPU:
+                    with self.accelerator.autocast():
+                        loss, loss_dict = self.model(sample)
+                else:
+                    train_model = self.model if hasattr(self.model, "training_loss") else self.accelerator.unwrap_model(self.model)
+                    with self.accelerator.autocast():
+                        loss, loss_dict = train_model.training_loss(sample)
                 self.accelerator.backward(loss)
 
                 if self.accelerator.sync_gradients:
-                    grad_norm = self.accelerator.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+                    if self.accelerator.distributed_type == DistributedType.DEEPSPEED:
+                        # 读取 engine 范数不等于启用了裁剪；复现配置保持参考版行为。
+                        grad_norm = self.model.get_global_grad_norm()
+                    else:
+                        grad_norm = self.accelerator.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
                     self.optimizer.step()
                     if not self.accelerator.optimizer_step_was_skipped:
                         self.scheduler.step()
                     self.optimizer.zero_grad(set_to_none=True)
                     self.global_step += 1
-                    global_loss = float(
-                        self.accelerator.gather(loss.detach().float().reshape(1)).mean().item()
-                    )
-                    global_loss_metrics = {}
-                    for key, value in loss_dict.items():
-                        metric_tensor = torch.tensor(float(value), device=loss.device, dtype=torch.float32).reshape(1)
-                        global_loss_metrics[key] = float(
-                            self.accelerator.gather(metric_tensor).mean().item()
+                    do_log = self.log_every > 0 and self.global_step % self.log_every == 0
+                    if do_log:
+                        global_loss = float(
+                            self.accelerator.gather(loss.detach().float().reshape(1)).mean().item()
                         )
-                    grad_norm_tensor = torch.tensor(grad_norm, device=loss.device, dtype=torch.float32)
-                    global_grad_norm = float(self.accelerator.gather(grad_norm_tensor).mean().item())
+                        global_loss_metrics = {}
+                        for key, value in loss_dict.items():
+                            metric_tensor = torch.tensor(float(value), device=loss.device, dtype=torch.float32).reshape(1)
+                            global_loss_metrics[key] = float(
+                                self.accelerator.gather(metric_tensor).mean().item()
+                            )
+                        grad_norm_value = float("nan") if grad_norm is None else float(grad_norm)
+                        grad_norm_tensor = torch.tensor(grad_norm_value, device=loss.device, dtype=torch.float32)
+                        global_grad_norm = float(self.accelerator.gather(grad_norm_tensor).mean().item())
 
-                    current_lr = float(self.optimizer.param_groups[0]["lr"])
+                        current_lr = float(self.optimizer.param_groups[0]["lr"])
 
-                    if self.log_every > 0 and self.global_step % self.log_every == 0 and self.accelerator.is_main_process:
+                    if do_log and self.accelerator.is_main_process:
                         eta_str, steps_per_sec = self._estimate_eta()
                         description = "[train] epoch=%d step=%d/%d loss=%.4f " % (
                             self.epoch,

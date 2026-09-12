@@ -18,6 +18,10 @@ from omegaconf import DictConfig, OmegaConf
 project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
+src_root = project_root / "src"
+if str(src_root) in sys.path:
+    sys.path.remove(str(src_root))
+sys.path.insert(0, str(src_root))
 
 from experiments.libero.summarize_results import summarize_results
 from experiments.libero.worker_pool import pending_task_count, read_worker_status, requeue_task

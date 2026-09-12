@@ -1,4 +1,4 @@
-# LIBERO：官方 FastWAM joint / unconditional / IDM，16 卡启动
+# LIBERO：FastWAM joint / unconditional / IDM，16 卡训练
 
 三个入口（均不含 geometry）：
 
@@ -6,14 +6,15 @@
 - `scripts/train_libero_uncond_16gpu.sh` → 官方 `libero_uncond_2cam224_1e-4`。
 - `scripts/train_libero_idm_16gpu.sh` → 官方 `libero_idm_2cam224_1e-4`，标准 IDM，不是 optional-IDM。
 
-三个入口依赖 `scripts/train_libero_16gpu_common.sh`，迁移时四个文件都要保留。
+三个入口依赖 `scripts/train_libero_16gpu_common.sh` 与 `scripts/libero_cluster_paths.sh`，迁移时五个文件都要保留。
 共用启动器参考官方 `scripts/train_zero1.sh`，使用相同的训练入口、Accelerate YAML 和
 DeepSpeed ZeRO-1 JSON，显式补充多机参数和 `standard` launcher（每节点启动一次，不使用 pdsh/SSH 自动启动）。
-没有修改官方 Python、模型结构、loss 或配置文件。
+当前版本已按 `fastwam4d_pp` 对齐三个模型的1d训练配置、初始化、VAE编码和trainer行为。
+逐microbatch精确对照、依赖环境及集群验收见 [TRAINING_ALIGNMENT.md](TRAINING_ALIGNMENT.md)。
 
 ## 先修改路径
 
-每个入口脚本开头均可编辑，也可使用同名环境变量覆盖：
+所有路径统一在 `scripts/libero_cluster_paths.sh` 编辑，也可使用同名环境变量覆盖。环境目录留空时使用当前已激活环境：
 
 - `FASTWAM_ENV`：已安装依赖的 Python 环境目录。
 - `CUDA_HOME`：包含 `bin/nvcc` 的 CUDA 工具链目录。
@@ -21,19 +22,28 @@ DeepSpeed ZeRO-1 JSON，显式补充多机参数和 `standard` launcher（每节
 - `TEXT_CACHE`：官方 LIBERO T5 文本缓存目录，不是几何缓存。
 - `MODEL_BASE`：Wan 初始化权重根目录。
 - `ACTION_DIT_CHECKPOINT`：插值后的 ActionDiT backbone 初始化权重。
-- `DATASET_STATS`：与训练数据和 processor 匹配的归一化 JSON；三种模型可共用。
+- `DATASET_STATS`：默认null，与参考一样在训练时计算，保存OUTPUT_DIR/dataset_stats.json；指定JSON则复用。严格run_pair对照先用prepare_stats.py生成一次。
 - `OUTPUT_DIR`：训练输出目录；多机必须共享且一致，不同模型的实验必须分开。
 - `RESUME_STATE`：首次训练保持 `null`；恢复时填写对应模型的完整训练 state 目录。
+- `MODEL_ID` / `TOKENIZER_MODEL_ID` / `REDIRECT_COMMON_FILES`：可选，覆盖模型目录解析方式，便于使用平铺权重目录。
 
-`MODEL_BASE` 保持如下结构（与本机现有权重一致）：
+Wan默认采用用户提供的平铺目录，`MODEL_BASE`是其父目录：
 
 ```text
-Wan-AI/Wan2.2-TI2V-5B/diffusion_pytorch_model-00001-of-00003.safetensors
-Wan-AI/Wan2.2-TI2V-5B/diffusion_pytorch_model-00002-of-00003.safetensors
-Wan-AI/Wan2.2-TI2V-5B/diffusion_pytorch_model-00003-of-00003.safetensors
-DiffSynth-Studio/Wan-Series-Converted-Safetensors/Wan2.2_VAE.safetensors
-ActionDiT_linear_interp_Wan22_alphascale_1024hdim.pt
+/mnt/new-interaction-p/common/user_folder/shizhen/checkpoints/Wan2.2-TI2V-5B/
+  diffusion_pytorch_model*.safetensors
+  Wan2.2_VAE.pth
+  models_t5_umt5-xxl-enc-bf16.pth   # 评测/预计算文本需要
+
+REPO_ROOT/checkpoints/ActionDiT_linear_interp_Wan22_alphascale_1024hdim.pt
+REPO_ROOT/data/text_embeds_cache/libero/
+OUTPUT_DIR/dataset_stats.json     # 默认训练时自动生成
+/new_interaction_group/common_models/Wan-AI__Wan2.1-I2V-14B-480P/google/umt5-xxl/
 ```
+
+ActionDiT/cache/tokenizer均按参考启动脚本及其model/data配置确定，Python/CUDA沿用当前已激活环境。
+`MODEL_ID=Wan2.2-TI2V-5B`、`REDIRECT_COMMON_FILES=false`；旧布局仍可用环境变量覆盖。
+详见 [ALIGNMENT_AGENT_HANDOFF.md](ALIGNMENT_AGENT_HANDOFF.md) 的路径来源与一次性stats准备命令。
 
 默认禁止自动下载，迁移前准备齐数据、文本缓存和权重。支持的数据格式取决于对应官方 data 配置，
 本脚本沿用本机已检查的 LeRobot 数据配置，不会自动转换数据布局。
@@ -50,8 +60,9 @@ bash scripts/train_libero_uncond_16gpu.sh
 bash scripts/train_libero_idm_16gpu.sh
 ```
 
-默认每卡 batch=1，梯度累积=1，全局 batch=16；workers=2/进程。
-这不是官方 task 的每卡 batch=16。学习率仍为官方 1e-4，训练 10 epoch，其他参数沿用官方配置。
+默认uncond每卡batch=4、梯度累积=2；joint和IDM每卡batch=8、梯度累积=1。
+三者全局batch均为128，workers=8/进程；action RoPE均为1d，action/video shift均为5。
+学习率1e-4，训练10 epoch。这里以参考脚本实际解析值为准，不采用其过时注释。
 可通过 `BATCH_SIZE`、`GRAD_ACCUM`、`NUM_WORKERS`、`MAX_STEPS` 环境变量覆盖；
 改变 batch 后不保证同样的收敛表现，不会自动缩放学习率。
 
@@ -102,6 +113,6 @@ unconditional 实验：两个节点均换成 `train_libero_uncond_16gpu.sh`，�
 
 ## 验证边界
 
-已检查 shell 语法、三种官方 Hydra 模型目标、路径参数传递、单机 16 卡和两机各 8 卡参数，
-以及不合法 GPU 数量的拒绝逻辑。未进行 16 卡实际训练或多机通信测试。
-此前双卡官方依赖环境出现第 2 步 NaN，原因尚未确定；不能承诺增至 16 卡后消失。
+已检查三个模型的Hydra配置、路径/拓扑传递，并完成CPU小模型的实际VAE、loss、梯度和多步AdamW对照。
+这些证据不代替真实16卡训练：集群必须按TRAINING_ALIGNMENT.md验证每个rank、每个microbatch和参数更新。
+此前记录的双卡第2步NaN也需要在实际环境重新验证，不能仅凭本地对照认为已经解决。

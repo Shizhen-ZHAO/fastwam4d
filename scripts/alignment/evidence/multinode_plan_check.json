@@ -1,0 +1,5 @@
+{
+  "node_1_can_start_after_node_0_created_trace_dir": true,
+  "same_node_stale_run_rejected": true,
+  "scope": "真实run_pair进程与Hydra，使用假的训练子进程；没有CUDA或多机通信"
+}

@@ -12,6 +12,7 @@ from einops import repeat
 from omegaconf import OmegaConf
 
 from .trainer import Wan22Trainer
+from .utils.pytorch_utils import set_global_seed
 from .utils.logging_config import get_logger, setup_logging
 from .utils.video_io import save_mp4
 from .utils import misc
@@ -174,6 +175,7 @@ def create_fastwam_joint(
     action_scheduler=None,
     loss=None,
     mot_checkpoint_mixed_attn: bool = False,
+    compile_training_denoise: bool = False,
     redirect_common_files: bool = True,
     model_dtype: torch.dtype = torch.bfloat16,
     device: str = "cuda",
@@ -242,6 +244,7 @@ def create_fastwam_joint(
         action_num_train_timesteps=int(action_scheduler["num_train_timesteps"]),
         loss_lambda_video=float(loss.get("lambda_video", 1.0)),
         loss_lambda_action=float(loss.get("lambda_action", 1.0)),
+        compile_training_denoise=bool(compile_training_denoise),
     )
 
 
@@ -466,6 +469,8 @@ def run_training(cfg: DictConfig):
     model_device = _resolve_train_device()
     mixed_precision = _normalize_mixed_precision(cfg.mixed_precision)
     model_dtype = _mixed_precision_to_model_dtype(mixed_precision)
+    # 在模型初始化前固定随机数；trainer 仍会为数据读取再次设 seed。
+    set_global_seed(int(cfg.get("seed", 42)))
     model = instantiate(cfg.model, model_dtype=model_dtype, device=model_device)
     train_ds, val_ds = build_datasets(cfg.data)
 
