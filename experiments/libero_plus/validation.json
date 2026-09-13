@@ -1,0 +1,365 @@
+{
+  "date": "2026-09-13",
+  "status": "local_validation_passed_cluster_pending",
+  "target_base": "dca6f6c26c42d1ee6406281dae6815cc39f9f250",
+  "reference_commit": "19d989111193ec2b69ec00493ef250dff531ad03",
+  "environment": {
+    "python": "3.12.14",
+    "system": "Darwin",
+    "machine": "arm64",
+    "torch": "2.7.1",
+    "numpy": "2.2.6",
+    "hydra": "1.3.2",
+    "omegaconf": "2.3.0",
+    "pandas": "2.2.3"
+  },
+  "functional_tests": {
+    "tests": 34,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "functional_scope": "实际 Python 函数、模拟环境/benchmark、tmux 替身、实际 shell launcher 与本地子进程；不含真实 LIBERO 仿真或 GPU",
+  "inference_parity": {
+    "scope": "CPU float32, actual two-layer DiT/MoT/small VAE, supplied context; no pretrained T5, CUDA, compile or LIBERO",
+    "cases": [
+      {
+        "variant": "uncond",
+        "method": "infer_action",
+        "seed": 42,
+        "steps": 10,
+        "shift": null,
+        "scheduler_updates": 10,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "uncond",
+        "method": "infer_joint",
+        "seed": 42,
+        "steps": 10,
+        "shift": null,
+        "scheduler_updates": 20,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "uncond",
+        "method": "infer_action",
+        "seed": 42,
+        "steps": 4,
+        "shift": null,
+        "scheduler_updates": 4,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "uncond",
+        "method": "infer_joint",
+        "seed": 42,
+        "steps": 4,
+        "shift": null,
+        "scheduler_updates": 8,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "uncond",
+        "method": "infer_action",
+        "seed": 7,
+        "steps": 1,
+        "shift": 3.0,
+        "scheduler_updates": 1,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "uncond",
+        "method": "infer_joint",
+        "seed": 7,
+        "steps": 1,
+        "shift": 3.0,
+        "scheduler_updates": 2,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "uncond",
+        "method": "infer_action",
+        "seed": 42,
+        "steps": 20,
+        "shift": 5.0,
+        "scheduler_updates": 20,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "uncond",
+        "method": "infer_joint",
+        "seed": 42,
+        "steps": 20,
+        "shift": 5.0,
+        "scheduler_updates": 40,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "joint",
+        "method": "infer_action",
+        "seed": 42,
+        "steps": 10,
+        "shift": null,
+        "scheduler_updates": 20,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "joint",
+        "method": "infer_joint",
+        "seed": 42,
+        "steps": 10,
+        "shift": null,
+        "scheduler_updates": 20,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "joint",
+        "method": "infer_action",
+        "seed": 42,
+        "steps": 4,
+        "shift": null,
+        "scheduler_updates": 8,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "joint",
+        "method": "infer_joint",
+        "seed": 42,
+        "steps": 4,
+        "shift": null,
+        "scheduler_updates": 8,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "joint",
+        "method": "infer_action",
+        "seed": 7,
+        "steps": 1,
+        "shift": 3.0,
+        "scheduler_updates": 2,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "joint",
+        "method": "infer_joint",
+        "seed": 7,
+        "steps": 1,
+        "shift": 3.0,
+        "scheduler_updates": 2,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "joint",
+        "method": "infer_action",
+        "seed": 42,
+        "steps": 20,
+        "shift": 5.0,
+        "scheduler_updates": 40,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "joint",
+        "method": "infer_joint",
+        "seed": 42,
+        "steps": 20,
+        "shift": 5.0,
+        "scheduler_updates": 40,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "idm",
+        "method": "infer_action",
+        "seed": 42,
+        "steps": 10,
+        "shift": null,
+        "scheduler_updates": 20,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "idm",
+        "method": "infer_joint",
+        "seed": 42,
+        "steps": 10,
+        "shift": null,
+        "scheduler_updates": 20,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "idm",
+        "method": "infer_action",
+        "seed": 42,
+        "steps": 4,
+        "shift": null,
+        "scheduler_updates": 8,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "idm",
+        "method": "infer_joint",
+        "seed": 42,
+        "steps": 4,
+        "shift": null,
+        "scheduler_updates": 8,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "idm",
+        "method": "infer_action",
+        "seed": 7,
+        "steps": 1,
+        "shift": 3.0,
+        "scheduler_updates": 2,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "idm",
+        "method": "infer_joint",
+        "seed": 7,
+        "steps": 1,
+        "shift": 3.0,
+        "scheduler_updates": 2,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      },
+      {
+        "variant": "idm",
+        "method": "infer_action",
+        "seed": 42,
+        "steps": 20,
+        "shift": 5.0,
+        "scheduler_updates": 40,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": false
+      },
+      {
+        "variant": "idm",
+        "method": "infer_joint",
+        "seed": 42,
+        "steps": 20,
+        "shift": 5.0,
+        "scheduler_updates": 40,
+        "action_max_abs_diff": 0.0,
+        "all_scheduler_tensors_equal": true,
+        "decoded_video_equal": true
+      }
+    ]
+  },
+  "source_checks": {
+    "python_3_10_syntax": true,
+    "bash_syntax": true,
+    "git_diff_check": true
+  },
+  "cluster_validation": {
+    "performed": false,
+    "reasons": [
+      "本机没有参考 Plus 挂载目录",
+      "没有本次三个模型的真实 1d 训练 checkpoint",
+      "未运行真实 tmux/PPU/GPU 或 Plus 仿真"
+    ]
+  },
+  "modified_existing_files": [
+    ".gitignore",
+    "experiments/libero/eval_libero_single.py",
+    "src/fastwam/runtime.py"
+  ],
+  "added_files_except_this_report": [
+    "configs/sim_libero_plus.yaml",
+    "experiments/libero_plus/CHANGES.md",
+    "experiments/libero_plus/CLUSTER_VALIDATION_PROMPT.md",
+    "experiments/libero_plus/README.md",
+    "experiments/libero_plus/compare_traces.py",
+    "experiments/libero_plus/eval_config.yaml",
+    "experiments/libero_plus/eval_libero_plus_worker.py",
+    "experiments/libero_plus/eval_utils.py",
+    "experiments/libero_plus/full_10030_lpt.txt",
+    "experiments/libero_plus/load_eval_config.py",
+    "experiments/libero_plus/parallel_workers.py",
+    "experiments/libero_plus/run_eval.sh",
+    "experiments/libero_plus/run_libero_plus_manager.py",
+    "experiments/libero_plus/run_libero_plus_parallel_workers.sh",
+    "experiments/libero_plus/summarize_results.py",
+    "experiments/libero_plus/task_utils.py",
+    "experiments/libero_plus/test/test_libero_plus.py",
+    "experiments/libero_plus/test/test_worker_execution.py",
+    "experiments/libero_plus/trace_worker.py"
+  ],
+  "sha256_except_this_report": {
+    ".gitignore": "7c6157130c57be84760741b0cb334bf45be7739277d833ced5ec754af82df00a",
+    "configs/sim_libero_plus.yaml": "2b1d5fed390092e054f3755fcdb3e2e7ccf8e5efa2ba22e697fffb51d3eaccdd",
+    "experiments/libero/eval_libero_single.py": "feb1b24b82268e837f9ab01c386e03489988bed2d529b538887798a9fb6ef09e",
+    "experiments/libero_plus/CHANGES.md": "f5338bf5e8c3f9147f335320b715a5f320c49e950a634accdfe2f0f71826dff7",
+    "experiments/libero_plus/CLUSTER_VALIDATION_PROMPT.md": "40bdfdaa202701b587b7e0fdceb8fccfeb3f5579d0fa4307d37b0bd58c832dd4",
+    "experiments/libero_plus/README.md": "50315ddbe850579ab9f2ea0a0039dbb4cbb9694b154d11ebb7786f906c35f75b",
+    "experiments/libero_plus/compare_traces.py": "f03816aff3dc59789dc611ba111071f4a7f9aa219be88ef83ca10b67b49469dd",
+    "experiments/libero_plus/eval_config.yaml": "1186e55313364c7d62ca5a0ade2f748f612cd78c70fb6be0ddebd2aaa6cf5bc4",
+    "experiments/libero_plus/eval_libero_plus_worker.py": "6126af2027b6addc3cd2dfadec5856082fdc262bcfa05e4f5109c9491aba08e6",
+    "experiments/libero_plus/eval_utils.py": "3d9994145d754d3051b1eb5b8f3fd1fad04062d1b2bbda079b50c332eb77a6d4",
+    "experiments/libero_plus/full_10030_lpt.txt": "e0e2c9b2291c2b0c92e7c3a5eafe6141ba4ea7caccdbede4906411be235f1e08",
+    "experiments/libero_plus/load_eval_config.py": "36987561fd687c0b2cc3554ef8f2130a072debe5e380dae275bbe3d13824496a",
+    "experiments/libero_plus/parallel_workers.py": "8a071cbb22710432b561f1ba3dbb25d9c49df61d7e1ba09e0700d018095f92ff",
+    "experiments/libero_plus/run_eval.sh": "d64d37624d7da7b4db4f23f59e57e0e59efd6fdd9a297f7d79e69e3aa892f799",
+    "experiments/libero_plus/run_libero_plus_manager.py": "5080d902521787d68e948714781b16abf121e7d2746f1a5c507ed6df608e6cbe",
+    "experiments/libero_plus/run_libero_plus_parallel_workers.sh": "560aa2206cfa1ab748253fec530ab8426156d7dc29d9a44404d572a08ca6cabe",
+    "experiments/libero_plus/summarize_results.py": "0ff9f17cd3b907dfd0c027b8938a2c4cf110ee19fd3072ce0335c95516698641",
+    "experiments/libero_plus/task_utils.py": "a66ed5501ae0b9ad2fe24bf22a8a0339708ff009779b634ca30aa2e8e0b7bfd1",
+    "experiments/libero_plus/test/test_libero_plus.py": "8f6d61121aed25cfd33d3833e1db515c97df7367103bfe6d5c95665f17cf4685",
+    "experiments/libero_plus/test/test_worker_execution.py": "696ee4453a0a0289e03411f7bfe6e88e5d55c2d67aadfe8f30c78bc9982e3ebe",
+    "experiments/libero_plus/trace_worker.py": "b46f039f1e76dec6cf2707f7d1d942c49d02f6ced7b9e249e474591045366b51",
+    "src/fastwam/runtime.py": "42b962cf19194624da956c714b3d4b0707bac08ab7160310e08ca22dcac2b785"
+  },
+  "publication": {
+    "remote": "https://code.alipay.com/new_interaction_group/WFM.git",
+    "branch": "fastwam-official-align-1d-libero-plus",
+    "parent_commit": "983c595037ba58e931b703e7bb2a73cc12a25fbd",
+    "changes_after_local_tests": "README/CHANGES 发布说明、集群验证 prompt 和 YAML 文末空行清理（解析结果相同）；Python/Shell 生产代码与已验证的内容相同",
+    "changed_existing_files_against_publication_parent": [
+      ".gitignore",
+      "experiments/libero/eval_libero_single.py"
+    ]
+  }
+}

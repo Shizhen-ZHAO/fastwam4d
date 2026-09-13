@@ -360,6 +360,19 @@ def _compute_clip_mean_psnr(
     return float(np.mean(frame_psnr_values))
 
 
+def _resolve_infer_seed(base_seed: Optional[int], replan_idx: int, increment: bool) -> Optional[int]:
+    """单次 replan 的推理 seed。
+
+    infer_increment_seed 开启时,同一 episode 内第 k 次 replan 用 base_seed+k
+    (42, 43, 44, ...),给 action diffusion 的初始噪声引入受控多样性,
+    避免固定噪声下模型在多步 rollout 中陷入卡死循环;序列本身确定,评测仍可复现。
+    base_seed 为 None 时保持 None(回落全局 RNG)。
+    """
+    if base_seed is None:
+        return None
+    return base_seed + replan_idx if increment else base_seed
+
+
 def _predict_action_chunk(
     obs: dict,
     task_description: str,
@@ -371,6 +384,7 @@ def _predict_action_chunk(
     input_w: int,
     input_h: int,
     model_device: str,
+    infer_seed: Optional[int] = None,
 ) -> tuple[np.ndarray, dict, Optional[list[Image.Image]]]:
     num_inference_steps_cfg = cfg.EVALUATION.get("num_inference_steps", None)
     if num_inference_steps_cfg is None:
@@ -390,6 +404,8 @@ def _predict_action_chunk(
         dtype=model.torch_dtype,
     )
 
+    if infer_seed is None:
+        infer_seed = None if cfg.get("seed") is None else int(cfg.seed)
     infer_kwargs = {
         "prompt": prompt,
         "input_image": image,
@@ -403,7 +419,7 @@ def _predict_action_chunk(
             if cfg.EVALUATION.get("sigma_shift") is None
             else float(cfg.EVALUATION.get("sigma_shift"))
         ),
-        "seed": None if cfg.get("seed") is None else int(cfg.seed),
+        "seed": infer_seed,
         "rand_device": str(cfg.EVALUATION.get("rand_device", "cpu")),
         "tiled": bool(cfg.EVALUATION.get("tiled", False)),
     }
@@ -465,6 +481,55 @@ def _get_max_steps(task_suite_name: str) -> int:
     return suite_steps[task_suite_name]
 
 
+class _SimRenderGate:
+    """移植参考评测的按步渲染门控；仅在模型不消费该步图像时跳过渲染。"""
+
+    def __init__(self, sim):
+        self._sim = sim
+        self._orig_render = sim.render
+        self.enabled = True  # True = 本步真实渲染
+        self._blank_cache = {}
+        sim.render = self.render
+
+    def render(self, width=None, height=None, **kwargs):
+        if self.enabled or kwargs.get("segmentation", False):
+            return self._orig_render(width=width, height=height, **kwargs)
+        depth = bool(kwargs.get("depth", False))
+        key = (int(width), int(height), depth)
+        blank = self._blank_cache.get(key)
+        if blank is None:
+            rgb = np.zeros((int(height), int(width), 3), dtype=np.uint8)
+            blank = (rgb, np.zeros((int(height), int(width)), dtype=np.float32)) if depth else rgb
+            self._blank_cache[key] = blank
+        # 返回拷贝,防止下游(numpy 视图/PIL/噪声模糊)原地改坏缓存的空图。
+        if depth:
+            return blank[0].copy(), blank[1].copy()
+        return blank.copy()
+
+    def restore(self):
+        self._sim.render = self._orig_render
+
+
+def _maybe_install_render_gate(env, cfg: DictConfig) -> Optional[_SimRenderGate]:
+    """满足条件时给 env 的 MjSim 装上渲染门控,否则返回 None。
+
+    仅当 EVALUATION.skip_unused_render=true 且 save_video=false、
+    visualize_future_video=false 时启用——后两者开启时每一帧都会被
+    (replay 视频 / GT 未来帧捕获)消费,不能跳过。
+    """
+    if not bool(cfg.EVALUATION.get("skip_unused_render", False)):
+        return None
+    if bool(cfg.EVALUATION.get("save_video", True)) or bool(
+        cfg.EVALUATION.get("visualize_future_video", False)
+    ):
+        logging.warning(
+            "EVALUATION.skip_unused_render=true 要求 save_video=false 且 "
+            "visualize_future_video=false(开启时每一帧都会被消费),本次不启用渲染跳过。"
+        )
+        return None
+    return _SimRenderGate(env.env.sim)
+
+
 def run_single_episode(
     env,
     initial_state,
@@ -488,6 +553,7 @@ def run_single_episode(
 
     env.reset()
     obs = env.set_init_state(initial_state)
+    render_gate = _maybe_install_render_gate(env, cfg)
     if use_action_ensembler:
         ensembler = ActionEnsembler()
         ensembler.reset()
@@ -500,103 +566,117 @@ def run_single_episode(
     current_replan_step = 0
     current_replan_idx = -1
 
+    increment_seed = bool(cfg.EVALUATION.get("infer_increment_seed", False))
+    base_seed = None if cfg.get("seed") is None else int(cfg.seed)
+    replan_count = 0
+
     t = 0
     done = False
     pbar = tqdm(total=max_steps + num_steps_wait, desc=f"Episode {episode_idx + 1}")
-    while t < max_steps + num_steps_wait:
-        pbar.update(1)
-        if t < num_steps_wait:
-            obs, _, done, _ = env.step(get_libero_dummy_action())
-            t += 1
-            continue
+    try:
+        while t < max_steps + num_steps_wait:
+            pbar.update(1)
+            if t < num_steps_wait:
+                if render_gate is not None:
+                    render_gate.enabled = t + 1 == num_steps_wait
+                obs, _, done, _ = env.step(get_libero_dummy_action())
+                t += 1
+                continue
 
-        if len(pending_actions) == 0:
-            action_chunk, imgs, predicted_future_frames = _predict_action_chunk(
-                obs=obs,
-                task_description=task_description,
-                model=model,
-                processor=processor,
-                cfg=cfg,
-                action_horizon=action_horizon,
-                input_w=input_w,
-                input_h=input_h,
-                model_device=model_device,
-            )
-            if predicted_future_frames is not None:
-                current_replan_idx += 1
-                current_predicted_future_clip = {
-                    "replan_idx": current_replan_idx,
-                    "gt_frames": [imgs.copy()],
-                    "pred_frames": predicted_future_frames,
-                }
+            if len(pending_actions) == 0:
+                action_chunk, imgs, predicted_future_frames = _predict_action_chunk(
+                    obs=obs,
+                    task_description=task_description,
+                    model=model,
+                    processor=processor,
+                    cfg=cfg,
+                    action_horizon=action_horizon,
+                    input_w=input_w,
+                    input_h=input_h,
+                    model_device=model_device,
+                    infer_seed=_resolve_infer_seed(base_seed, replan_count, increment_seed),
+                )
+                replan_count += 1
+                if predicted_future_frames is not None:
+                    current_replan_idx += 1
+                    current_predicted_future_clip = {
+                        "replan_idx": current_replan_idx,
+                        "gt_frames": [imgs.copy()],
+                        "pred_frames": predicted_future_frames,
+                    }
+                else:
+                    current_predicted_future_clip = None
+                current_replan_step = 0
+                if use_action_ensembler:
+                    ensembler.add_actions(action_chunk, t)
+                    pending_actions = [ensembler.get_action(ts).tolist() for ts in range(t, t + replan_steps)]
+                else:
+                    pending_actions = action_chunk[:replan_steps].tolist()
+                replay_images.append(imgs.copy())
             else:
-                current_predicted_future_clip = None
-            current_replan_step = 0
-            if use_action_ensembler:
-                ensembler.add_actions(action_chunk, t)
-                pending_actions = [ensembler.get_action(ts).tolist() for ts in range(t, t + replan_steps)]
-            else:
-                pending_actions = action_chunk[:replan_steps].tolist()
-            replay_images.append(imgs.copy())
-        else:
-            imgs = get_libero_image(obs)
-            replay_images.append(imgs.copy())
+                imgs = get_libero_image(obs)
+                replay_images.append(imgs.copy())
 
-        obs, _, done, _ = env.step(pending_actions.pop(0))
-        if visualize_future_video and current_predicted_future_clip is not None:
-            current_replan_step += 1
-            if current_replan_step in capture_steps:
-                current_predicted_future_clip["gt_frames"].append(get_libero_image(obs))
-            if done or len(pending_actions) == 0:
-                expected_frame_count = 1 + sum(
-                    1 for capture_step in capture_steps if capture_step <= current_replan_step
-                )
-                gt_len = len(current_predicted_future_clip["gt_frames"])
-                pred_len = len(current_predicted_future_clip["pred_frames"])
-                assert gt_len == expected_frame_count, (
-                    "GT future frames do not match expected capture count: "
-                    f"gt_len={gt_len} expected={expected_frame_count} "
-                    f"episode={episode_idx} replan={current_predicted_future_clip['replan_idx']} "
-                    f"current_replan_step={current_replan_step} capture_steps={sorted(capture_steps)}."
-                )
-                assert pred_len >= expected_frame_count, (
-                    "Predicted future frames shorter than expected capture count: "
-                    f"pred_len={pred_len} expected={expected_frame_count} "
-                    f"episode={episode_idx} replan={current_predicted_future_clip['replan_idx']}."
-                )
-                if pred_len != expected_frame_count:
-                    logging.info(
-                        "Align predicted clip length to executed steps: "
-                        "episode=%s replan=%s done=%s expected=%s pred_full=%s",
-                        episode_idx,
-                        current_predicted_future_clip["replan_idx"],
-                        done,
-                        expected_frame_count,
-                        pred_len,
+            if render_gate is not None:
+                render_gate.enabled = len(pending_actions) == 1
+            obs, _, done, _ = env.step(pending_actions.pop(0))
+            if visualize_future_video and current_predicted_future_clip is not None:
+                current_replan_step += 1
+                if current_replan_step in capture_steps:
+                    current_predicted_future_clip["gt_frames"].append(get_libero_image(obs))
+                if done or len(pending_actions) == 0:
+                    expected_frame_count = 1 + sum(
+                        1 for capture_step in capture_steps if capture_step <= current_replan_step
                     )
-                current_predicted_future_clip["pred_frames"] = current_predicted_future_clip["pred_frames"][
-                    :expected_frame_count
-                ]
-                assert len(current_predicted_future_clip["gt_frames"]) == len(
-                    current_predicted_future_clip["pred_frames"]
-                ), (
-                    "GT/pred frame count mismatch after alignment: "
-                    f"len(gt_frames)={len(current_predicted_future_clip['gt_frames'])} "
-                    f"len(pred_frames)={len(current_predicted_future_clip['pred_frames'])} "
-                    f"episode={episode_idx} replan={current_predicted_future_clip['replan_idx']}."
-                )
-                clip_psnr = _compute_clip_mean_psnr(
-                    current_predicted_future_clip["gt_frames"],
-                    current_predicted_future_clip["pred_frames"],
-                )
-                if clip_psnr is not None:
-                    episode_future_clip_psnr.append(clip_psnr)
-                predicted_future_video_clips.append(current_predicted_future_clip)
-                current_predicted_future_clip = None
-        if done:
-            break
-        t += 1
-    pbar.close()
+                    gt_len = len(current_predicted_future_clip["gt_frames"])
+                    pred_len = len(current_predicted_future_clip["pred_frames"])
+                    assert gt_len == expected_frame_count, (
+                        "GT future frames do not match expected capture count: "
+                        f"gt_len={gt_len} expected={expected_frame_count} "
+                        f"episode={episode_idx} replan={current_predicted_future_clip['replan_idx']} "
+                        f"current_replan_step={current_replan_step} capture_steps={sorted(capture_steps)}."
+                    )
+                    assert pred_len >= expected_frame_count, (
+                        "Predicted future frames shorter than expected capture count: "
+                        f"pred_len={pred_len} expected={expected_frame_count} "
+                        f"episode={episode_idx} replan={current_predicted_future_clip['replan_idx']}."
+                    )
+                    if pred_len != expected_frame_count:
+                        logging.info(
+                            "Align predicted clip length to executed steps: "
+                            "episode=%s replan=%s done=%s expected=%s pred_full=%s",
+                            episode_idx,
+                            current_predicted_future_clip["replan_idx"],
+                            done,
+                            expected_frame_count,
+                            pred_len,
+                        )
+                    current_predicted_future_clip["pred_frames"] = current_predicted_future_clip["pred_frames"][
+                        :expected_frame_count
+                    ]
+                    assert len(current_predicted_future_clip["gt_frames"]) == len(
+                        current_predicted_future_clip["pred_frames"]
+                    ), (
+                        "GT/pred frame count mismatch after alignment: "
+                        f"len(gt_frames)={len(current_predicted_future_clip['gt_frames'])} "
+                        f"len(pred_frames)={len(current_predicted_future_clip['pred_frames'])} "
+                        f"episode={episode_idx} replan={current_predicted_future_clip['replan_idx']}."
+                    )
+                    clip_psnr = _compute_clip_mean_psnr(
+                        current_predicted_future_clip["gt_frames"],
+                        current_predicted_future_clip["pred_frames"],
+                    )
+                    if clip_psnr is not None:
+                        episode_future_clip_psnr.append(clip_psnr)
+                    predicted_future_video_clips.append(current_predicted_future_clip)
+                    current_predicted_future_clip = None
+            if done:
+                break
+            t += 1
+    finally:
+        pbar.close()
+        if render_gate is not None:
+            render_gate.restore()
 
     episode_mean_psnr = (
         float(np.mean(episode_future_clip_psnr)) if len(episode_future_clip_psnr) > 0 else None
@@ -630,70 +710,73 @@ def run_single_task(
         results["episode_future_video_psnr"] = []
         results["future_video_psnr_mean"] = None
 
-    for trial_idx in range(int(cfg.EVALUATION.num_trials)):
-        success, replay_images, predicted_future_video_clips, episode_mean_psnr = run_single_episode(
-            env=env,
-            initial_state=initial_states[trial_idx],
-            task_description=task_description,
-            model=model,
-            processor=processor,
-            cfg=cfg,
-            episode_idx=trial_idx,
-            action_horizon=action_horizon,
-            input_w=input_w,
-            input_h=input_h,
-            model_device=model_device,
-        )
-        if success:
-            results["successes"] += 1
-            results["success_episodes"].append(trial_idx)
-        else:
-            results["failure_episodes"].append(trial_idx)
-        if visualize_future_video:
-            results["episode_future_video_psnr"].append(episode_mean_psnr)
-
-        save_rollout_video(
-            video_dir,
-            replay_images,
-            f"task{cfg.EVALUATION.task_id}_trial{trial_idx}",
-            success=success,
-            task_description=task_description,
-        )
-        if visualize_future_video:
-            if len(predicted_future_video_clips) == 0:
-                logging.warning(
-                    "No predicted future frames collected for task %s trial %s.",
-                    cfg.EVALUATION.task_id,
-                    trial_idx,
-                )
+    try:
+        for trial_idx in range(int(cfg.EVALUATION.num_trials)):
+            success, replay_images, predicted_future_video_clips, episode_mean_psnr = run_single_episode(
+                env=env,
+                initial_state=initial_states[trial_idx],
+                task_description=task_description,
+                model=model,
+                processor=processor,
+                cfg=cfg,
+                episode_idx=trial_idx,
+                action_horizon=action_horizon,
+                input_w=input_w,
+                input_h=input_h,
+                model_device=model_device,
+            )
+            if success:
+                results["successes"] += 1
+                results["success_episodes"].append(trial_idx)
             else:
-                all_gt_frames = []
-                all_pred_frames = []
-                for clip in predicted_future_video_clips:
-                    all_gt_frames.extend(clip["gt_frames"])
-                    all_pred_frames.extend(clip["pred_frames"])
-                    save_prediction_video(
-                        predicted_video_dir,
-                        clip["gt_frames"],
-                        clip["pred_frames"],
-                        f"task{cfg.EVALUATION.task_id}_trial{trial_idx}",
-                        clip["replan_idx"],
-                        success=success,
-                        task_description=task_description,
-                    )
-                save_prediction_video(
-                    predicted_video_dir,
-                    all_gt_frames,
-                    all_pred_frames,
+                results["failure_episodes"].append(trial_idx)
+            if visualize_future_video:
+                results["episode_future_video_psnr"].append(episode_mean_psnr)
+
+            if bool(cfg.EVALUATION.get("save_video", True)):
+                save_rollout_video(
+                    video_dir,
+                    replay_images,
                     f"task{cfg.EVALUATION.task_id}_trial{trial_idx}",
-                    "all",
                     success=success,
                     task_description=task_description,
                 )
+            if visualize_future_video:
+                if len(predicted_future_video_clips) == 0:
+                    logging.warning(
+                        "No predicted future frames collected for task %s trial %s.",
+                        cfg.EVALUATION.task_id,
+                        trial_idx,
+                    )
+                else:
+                    all_gt_frames = []
+                    all_pred_frames = []
+                    for clip in predicted_future_video_clips:
+                        all_gt_frames.extend(clip["gt_frames"])
+                        all_pred_frames.extend(clip["pred_frames"])
+                        save_prediction_video(
+                            predicted_video_dir,
+                            clip["gt_frames"],
+                            clip["pred_frames"],
+                            f"task{cfg.EVALUATION.task_id}_trial{trial_idx}",
+                            clip["replan_idx"],
+                            success=success,
+                            task_description=task_description,
+                        )
+                    save_prediction_video(
+                        predicted_video_dir,
+                        all_gt_frames,
+                        all_pred_frames,
+                        f"task{cfg.EVALUATION.task_id}_trial{trial_idx}",
+                        "all",
+                        success=success,
+                        task_description=task_description,
+                    )
 
-    close_fn = getattr(env, "close", None)
-    if close_fn is not None:
-        close_fn()
+    finally:
+        close_fn = getattr(env, "close", None)
+        if close_fn is not None:
+            close_fn()
 
     if visualize_future_video:
         valid_episode_psnr = [x for x in results["episode_future_video_psnr"] if x is not None]

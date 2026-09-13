@@ -244,3 +244,6 @@ manifest.json
 wandb/
 onelogger.err
 onelogger.log
+
+# LIBERO Plus 可复现任务清单
+!experiments/libero_plus/full_10030_lpt.txt

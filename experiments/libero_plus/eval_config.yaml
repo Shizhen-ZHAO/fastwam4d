@@ -1,0 +1,46 @@
+# 三个 1d 模型共用入口。环境变量覆盖 YAML，末尾 Hydra 参数覆盖最终配置。
+# --config 可叠加本文件已有的 key；null 表示交给入口推导。
+CKPT: null                         # 必填：对应模型的训练权重，不是 Wan 初始化目录
+EVAL_MODE: uncond                   # uncond | joint | idm
+FASTWAM_ACTION_ROPE_MODE: 1d
+TASK_CONFIG: null
+NUM_GPUS: 16
+CUDA_VISIBLE_DEVICES: null          # 未设置时按 NUM_GPUS 生成；设置时数量必须一致
+MAX_TASKS_PER_GPU: 3                # 小规模验证用 1；全量前测量显存/主机内存
+NUM_TRIALS: 1
+SAVE_VIDEO: false
+VISUALIZE_FUTURE_VIDEO: false
+SKIP_UNUSED_RENDER: true
+INFER_INCREMENT_SEED: true          # episode 内第 k 次 replan 使用 seed+k
+TASK_FILE: null                     # 默认 full_10030_lpt.txt；auto 自动枚举
+OUTPUT_BASE_DIR: null
+RUN_TAG: null
+OUTPUT_DIR: null                    # 必须为空目录，避免混入历史结果
+DATASET_STATS_PATH: null            # 默认 DATASET_STATS；否则沿 checkpoint 父目录查找
+LIBERO_PLUS_ROOT: /new_interaction_group/tine/LIBERO-plus-main
+LIBERO_PLUS_ASSETS_DIR: /new_interaction_group/common_datasets/dreanzeo_data/inspire/hdd/project/embodied-multimodality/public/syfei/libero_new/release/dataset/LIBERO-plus-0/assets
+LIBERO_PLUS_BDDL_DIR: null
+LIBERO_PLUS_INIT_STATES_DIR: null
+LIBERO_PLUS_BENCHMARK_ROOT: null
+TASK_CLASSIFICATION_PATH: null
+# 模型/tokenizer/环境路径继承 scripts/libero_cluster_paths.sh，也可覆盖。
+WAN_CHECKPOINT_DIR: null
+MODEL_BASE: null
+MODEL_ID: null
+TOKENIZER_MODEL_ID: null
+REDIRECT_COMMON_FILES: null
+FASTWAM_ENV: null
+CUDA_HOME: null
+DIFFSYNTH_MODEL_BASE_PATH: null
+PYTHON_BIN: null
+MUJOCO_GL: osmesa
+PYOPENGL_PLATFORM: null
+WORKER_START_WAVE_SIZE: null        # 默认 NUM_GPUS
+WORKER_START_WAVE_INTERVAL: 120
+WORKER_STARTUP_TIMEOUT: 180
+MONITORING_INTERVAL: 5
+SESSION_NAME: null
+OSS_BACKUP: false
+OSS_BACKUP_DIR: /ossfs/workspace/eval_res
+SHARE_BACKUP: true
+SHARE_BACKUP_DIR: /new-interaction/share/user_folder/jiahao.ljh/fastwam_libero_plus_eval_results

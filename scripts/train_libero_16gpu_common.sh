@@ -42,7 +42,7 @@ export DIFFSYNTH_MODEL_BASE_PATH="${MODEL_BASE}"
 export DIFFSYNTH_SKIP_DOWNLOAD=true
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-8}"
-export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
+export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:False}"
 cd "${REPO_ROOT}"
 printf 'Task: %s\nData: %s\nText cache: %s\nWan model base: %s\nActionDiT checkpoint: %s\nDataset stats: %s\nResume: %s\nOutput: %s\n' \
   "${TASK}" "${DATA_ROOT}" "${TEXT_CACHE}" "${MODEL_BASE}" "${ACTION_DIT_CHECKPOINT}" "${DATASET_STATS}" "${RESUME_STATE}" "${OUTPUT_DIR}"

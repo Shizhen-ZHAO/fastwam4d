@@ -68,7 +68,7 @@ def main():
     for key in ['BATCH_SIZE', 'GRAD_ACCUM', 'NUM_WORKERS', 'MAX_STEPS', 'RESUME_STATE']:
         env.pop(key, None)
     env.setdefault('OMP_NUM_THREADS', '8')
-    env.setdefault('PYTORCH_CUDA_ALLOC_CONF', 'expandable_segments:True')
+    env.setdefault('PYTORCH_CUDA_ALLOC_CONF', 'expandable_segments:False')
     env.setdefault('ACTION_DIT_CHECKPOINT', str(target / 'checkpoints/ActionDiT_linear_interp_Wan22_alphascale_1024hdim.pt'))
     if not args.dry_run:
         if env['DATASET_STATS'] == 'null':

@@ -1,0 +1,18 @@
+# @package _global_
+defaults:
+  - sim_libero
+  - override /hydra/job_logging: disabled
+  - _self_
+
+EVALUATION:
+  num_trials: 1
+  output_dir: ./evaluate_results/libero_plus/${hydra:runtime.choices.task}/${now:%Y%m%d_%H%M%S}
+  save_video: false
+  visualize_future_video: false
+  skip_unused_render: true
+  infer_increment_seed: true
+  compile_action_infer: false
+
+MULTIRUN:
+  num_gpus: 16
+  max_tasks_per_gpu: 3
