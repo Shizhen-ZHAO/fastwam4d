@@ -1,0 +1,33 @@
+# All machine-specific paths live here. Copy this file for a new cluster and
+# change values only in the copied path config.
+train_datasets:
+  - /mnt/homes/zhaoshizhen/lf/new_repos/4DWAM/FastWAM/data/libero_mujoco3.3.2/libero_spatial_no_noops_lerobot
+  - /mnt/homes/zhaoshizhen/lf/new_repos/4DWAM/FastWAM/data/libero_mujoco3.3.2/libero_object_no_noops_lerobot
+  - /mnt/homes/zhaoshizhen/lf/new_repos/4DWAM/FastWAM/data/libero_mujoco3.3.2/libero_goal_no_noops_lerobot
+  - /mnt/homes/zhaoshizhen/lf/new_repos/4DWAM/FastWAM/data/libero_mujoco3.3.2/libero_10_no_noops_lerobot
+text_embedding_cache: /mnt/homes/zhaoshizhen/lf/new_repos/4DWAM/FastWAM/data/text_embeds_cache/libero
+
+fastwam_checkpoint: /mnt/homes/zhaoshizhen/checkpoints/fastwam/libero_uncond_2cam224.pt
+dataset_stats: /mnt/homes/zhaoshizhen/checkpoints/fastwam/libero_uncond_2cam224_dataset_stats.json
+model_base: /mnt/homes/zhaoshizhen/checkpoints/fastwam/model_base
+# An absolute model_id is supported when Wan DiT is stored separately.
+model_id: /mnt/homes/zhaoshizhen/lf/repos/FastWAM/checkpoints/Wan-AI/Wan2.2-TI2V-5B
+redirect_common_files: true
+action_dit_checkpoint: /mnt/homes/zhaoshizhen/lf/repos/FastWAM/checkpoints/ActionDiT_linear_interp_Wan22_alphascale_1024hdim.pt
+
+track4world_repo: /mnt/homes/zhaoshizhen/lf/Track4World
+track4world_checkpoint: /mnt/homes/zhaoshizhen/lf/Track4World/checkpoints/track4world_da3.pth
+da3_model: /mnt/homes/zhaoshizhen/lf/Track4World/checkpoints/DA3NESTED-GIANT-LARGE-1.1
+track4world_extra_pythonpath: /mnt/homes/zhaoshizhen/lf/.deps/fastwam_track4world
+
+libero_repo: /home/zhaoshizhen/lf/third_party/libero_base/repos/LIBERO
+geometry_cache: /home/zhaoshizhen/lf/repos_new_1/FastWAM_3_track/outputs/geometry_cache_v2
+output_root: /home/zhaoshizhen/lf/repos_new_1/FastWAM_3_track/outputs/geometry_ablation
+tokenizer_model_id: Wan-AI/Wan2.1-T2V-1.3B
+# Set these on the Plus evaluation machine; never fall back to ordinary LIBERO.
+libero_plus_repo: null
+libero_plus_assets: null
+
+# Online inference uses the current model GPU; offline training reads the cache.
+geometry_device: same
+hf_endpoint: https://hf-mirror.com

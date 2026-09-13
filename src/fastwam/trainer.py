@@ -398,7 +398,7 @@ class Wan22Trainer:
                     f"`context/context_mask` must be [B,L,D]/[B,L], got {tuple(context.shape)} and {tuple(context_mask.shape)}"
                 )
 
-        return {
+        result = {
             "video": video,
             "prompt": prompt,
             "action": action,
@@ -407,6 +407,9 @@ class Wan22Trainer:
             "context_mask": context_mask,
             "action_horizon": action_horizon,
         }
+        if "geometry_raw" in sample:
+            result["geometry_raw"] = {k: v.unsqueeze(0) for k, v in sample["geometry_raw"].items()}
+        return result
 
     @torch.no_grad()
     def evaluate(self):
@@ -456,6 +459,7 @@ class Wan22Trainer:
 
         pred = model.infer(
             **infer_kwargs,
+            **({"geometry_raw": sample["geometry_raw"]} if "geometry_raw" in sample else {}),
         )
         
         pred_video = pred["video"]

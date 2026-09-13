@@ -1,0 +1,35 @@
+defaults:
+  - fastwam
+  - _self_
+
+_target_: fastwam.geometry.runtime.create_model
+geometry_enabled: ${geometry_enabled}
+model_base_path: ${paths.model_base}
+extra_pythonpath: ${paths.track4world_extra_pythonpath}
+load_text_encoder: false
+model_id: ${paths.model_id}
+tokenizer_model_id: ${paths.tokenizer_model_id}
+redirect_common_files: ${paths.redirect_common_files}
+skip_dit_load_from_pretrain: false
+action_dit_pretrained_path: ${paths.action_dit_checkpoint}
+geometry:
+  target: vae_latent
+  train_mode: full
+  num_views: 2
+  history_length: 8
+  history_stride: 1
+  history_fps: 20.0
+  memory_dim: 512
+  inner_dim: 512
+  heads: 8
+  temporal_layers: 2
+  same_view_only: true
+  extractor:
+    repo_path: ${paths.track4world_repo}
+    checkpoint_path: ${paths.track4world_checkpoint}
+    da3_path: ${paths.da3_model}
+    device: ${paths.geometry_device}
+    image_size: 256
+    grid_size: 8
+    iters: 4
+    confidence_threshold: 0.25

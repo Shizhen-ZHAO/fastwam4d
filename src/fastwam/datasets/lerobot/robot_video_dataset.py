@@ -234,6 +234,7 @@ class RobotVideoDataset(torch.utils.data.Dataset):
             "action": action,
             "proprio": proprio,
             "prompt": instruction,
+            "sample_index": int(sample["idx"]),  # actual decoded frame, including baseline retry
             "image_is_pad": image_is_pad,
             "action_is_pad": sample["action_is_pad"],
             "proprio_is_pad": sample["proprio_is_pad"],

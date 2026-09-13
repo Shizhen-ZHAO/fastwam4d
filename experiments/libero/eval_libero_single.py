@@ -385,6 +385,7 @@ def _predict_action_chunk(
     input_h: int,
     model_device: str,
     infer_seed: Optional[int] = None,
+    geometry_history=None,
 ) -> tuple[np.ndarray, dict, Optional[list[Image.Image]]]:
     num_inference_steps_cfg = cfg.EVALUATION.get("num_inference_steps", None)
     if num_inference_steps_cfg is None:
@@ -425,6 +426,8 @@ def _predict_action_chunk(
     }
     visualize_future_video = bool(cfg.EVALUATION.get("visualize_future_video", False))
     predicted_future_frames = None
+    if geometry_history is not None:
+        infer_kwargs.update(geometry_history.inputs())
     if visualize_future_video:
         infer_kwargs["num_video_frames"] = _get_num_video_frames(cfg)
     elif "num_video_frames" in inspect.signature(model.infer_action).parameters:
@@ -553,7 +556,15 @@ def run_single_episode(
 
     env.reset()
     obs = env.set_init_state(initial_state)
-    render_gate = _maybe_install_render_gate(env, cfg)
+    geometry_history = None
+    if getattr(model, "geometry_config", None) is not None:
+        from fastwam.datasets.libero_geometry import LiberoHistoryBuffer
+        geo = model.geometry_config
+        geometry_history = LiberoHistoryBuffer(length=geo["history_length"], stride=geo["history_stride"],
+            image_size=geo["extractor"]["image_size"], fps=geo["history_fps"])
+    # Tracking consumes EVERY observation, including wait/non-replan steps.
+    # The Plus render gate would otherwise put blank RGB into the history.
+    render_gate = _maybe_install_render_gate(env, cfg) if geometry_history is None else None
     if use_action_ensembler:
         ensembler = ActionEnsembler()
         ensembler.reset()
@@ -576,6 +587,9 @@ def run_single_episode(
     try:
         while t < max_steps + num_steps_wait:
             pbar.update(1)
+            if geometry_history is not None:
+                images = get_libero_image(obs)
+                geometry_history.append([images["image"], images["wrist_image"]], t)
             if t < num_steps_wait:
                 if render_gate is not None:
                     render_gate.enabled = t + 1 == num_steps_wait
@@ -595,6 +609,7 @@ def run_single_episode(
                     input_h=input_h,
                     model_device=model_device,
                     infer_seed=_resolve_infer_seed(base_seed, replan_count, increment_seed),
+                    **({"geometry_history": geometry_history} if geometry_history is not None else {}),
                 )
                 replan_count += 1
                 if predicted_future_frames is not None:

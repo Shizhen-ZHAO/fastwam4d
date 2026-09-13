@@ -1,0 +1,13 @@
+defaults:
+  - libero_2cam
+  - _self_
+train:
+  _target_: fastwam.geometry.runtime.create_dataset
+  geometry_enabled: ${geometry_enabled}
+  geometry: ${model.geometry}
+  geometry_cache_root: ${paths.geometry_cache}
+  dataset_dirs: ${paths.train_datasets}
+  text_embedding_cache_dir: ${paths.text_embedding_cache}
+  pretrained_norm_stats: ${paths.dataset_stats}
+# Keep original validation behavior: val defaults to the training dataset.
+# Offline training-time validation uses raw cache. Simulator testing is online.
