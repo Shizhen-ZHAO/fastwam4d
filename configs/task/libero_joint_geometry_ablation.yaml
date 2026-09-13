@@ -1,0 +1,7 @@
+# @package _global_
+defaults:
+  - libero_joint_2cam224_1e-4
+  - override /data: libero_geometry_ablation
+  - override /model: fastwam_joint_geometry
+  - _self_
+geometry_enabled: true

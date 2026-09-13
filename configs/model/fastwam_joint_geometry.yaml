@@ -1,0 +1,6 @@
+# Reuse identical geometry settings/cache and backbone dimensions.
+# The factory selects the actual FastWAMJoint subclass, not uncond.
+defaults:
+  - fastwam_geometry
+  - _self_
+_target_: fastwam.geometry.runtime.create_joint_model

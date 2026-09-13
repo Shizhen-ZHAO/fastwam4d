@@ -18,12 +18,15 @@ def expanded_path(value):
 
 def validate_eval_config(cfg):
     factory = str(cfg.model._target_)
-    if factory == "fastwam.geometry.runtime.create_model":
-        # Geometry currently extends only the uncond FastWAM, not joint/IDM.
+    geometry_factories = {
+        "fastwam.geometry.runtime.create_model": "uncond",
+        "fastwam.geometry.runtime.create_joint_model": "joint",
+    }
+    if factory in geometry_factories:
         geometry = cfg.model.get("geometry", {})
         if geometry.get("target") != "vae_latent" or geometry.get("num_views") != 2:
             raise ValueError("Geometry Plus requires two-view current VAE latent conditioning")
-        factory = FACTORIES["uncond"]
+        factory = FACTORIES[geometry_factories[factory]]
     if factory not in FACTORIES.values():
         raise ValueError(f"Plus 入口只支持 uncond/joint/idm：{factory}")
     if str(cfg.model.action_dit_config.get("action_rope_mode")) != "1d":

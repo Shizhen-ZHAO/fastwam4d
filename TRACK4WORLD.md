@@ -2,7 +2,8 @@
 
 基线是同级 FastWAM_3 的 `31770396e672bfa283f4283e59775057ab69ec89`。
 几何实现迁自 FastWAM_2；不修改 FastWAM_3 或 FastWAM_2。
-这里是 **uncond 的几何版本**。原 joint/IDM 和普通 Plus 入口仍保留，但没有为其添加几何层。
+现在支持 **uncond 和 joint 两种几何版本**，默认入口仍为 uncond。
+joint 的完整命令见 [JOINT_TRACK4WORLD.md](JOINT_TRACK4WORLD.md)。原 IDM 保留，但未添加几何层。
 
 ## 数据和模型
 
@@ -79,6 +80,7 @@ GEOMETRY_ENABLED=true OUTPUT_DIR=/cluster/runs/track_seed42 \
 ```
 
 默认 B4/GAS2、16卡 global batch=128、10 epoch、seed42、bf16、ZeRO-1。
+上述为 uncond；joint 使用 `train_joint_ablation_16gpu.sh`，默认 B8/GAS1、global batch 同为128。
 allocator 和 FastWAM_3 一样默认 `expandable_segments:False`，允许环境变量覆盖。
 两机各8卡使用 `NNODES=2 GPUS_PER_NODE=8 NODE_RANK=0/1 MASTER_ADDR=主节点IP`，
 同时设置一致的 `RUN_ID` 和共享 `OUTPUT_DIR`。其他参数两组保持一致。

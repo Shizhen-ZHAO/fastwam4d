@@ -19,7 +19,8 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'src'),str(ROOT),str(ROOT/'geometry_tests')]
 from libero_track4world import load_paths,geometry_config
 from test_ablation import tiny
-from fastwam.geometry.model import GeometryFastWAM
+from fastwam.geometry.model import GeometryFastWAM, GeometryFastWAMJoint
+from geometry_ablation import variant_task
 from fastwam.datasets.lerobot.utils.normalizer import load_dataset_stats_from_json
 from fastwam.datasets.lerobot.robot_video_dataset import RobotVideoDataset
 
@@ -29,6 +30,7 @@ def main():
     p.add_argument('--paths',default=str(ROOT/'configs/paths/libero_track4world_local.yaml'))
     p.add_argument('--checkpoint',required=True)
     p.add_argument('--output',required=True)
+    p.add_argument('--variant',choices=['uncond','joint'],default='uncond')
     args=p.parse_args()
     paths=load_paths(args.paths);out=Path(args.output).resolve();out.mkdir(parents=True,exist_ok=False)
     for entry in (paths['track4world_extra_pythonpath'],paths['libero_repo'],str(ROOT/'experiments/libero')):
@@ -39,10 +41,11 @@ def main():
     os.environ.update(LIBERO_CONFIG_PATH=str(runtime),MUJOCO_GL='egl')
     from experiments.libero import eval_libero_single as evaluation
     with initialize_config_dir(config_dir=str(ROOT/'configs'),version_base='1.3'):
-        cfg=compose(config_name='sim_libero',overrides=['task=libero_geometry_ablation','+paths=libero_track4world_local',
+        cfg=compose(config_name='sim_libero',overrides=[f'task={variant_task(args.variant)}',f'+paths={Path(args.paths).stem}',
             'EVALUATION.replan_steps=1','EVALUATION.num_steps_wait=8','EVALUATION.num_inference_steps=3'])
     geo=geometry_config(paths);geo.update(latent_channels=4,memory_dim=32,inner_dim=32,heads=2,temporal_layers=1)
-    model=tiny(GeometryFastWAM,device='cuda:0',dtype=torch.bfloat16,text_dim=4096)
+    model_class=GeometryFastWAMJoint if args.variant=='joint' else GeometryFastWAM
+    model=tiny(model_class,device='cuda:0',dtype=torch.bfloat16,text_dim=4096)
     model.enable_geometry(geo);model.load_checkpoint(args.checkpoint);model.eval().requires_grad_(False)
     # Use real task-specific cached T5 embeddings with baseline padding, only
     # for this bounded small-model check. Production evaluation loads T5.
@@ -70,7 +73,7 @@ def main():
         evaluation.run_single_episode(env,initial,description,model,processor,cfg,0,
             action_horizon=32,input_w=448,input_h=224,model_device='cuda:0')
         assert model._geometry_extractor.calls==2 and len(checks)==2
-        report=dict(scope='trained small WAM + real LIBERO + real online Track4World + cached real T5',
+        report=dict(scope='trained small WAM + real LIBERO + real online Track4World + cached real T5',variant=args.variant,
             control_steps=2,extractor_calls=2,finite_actions=True,action_shapes=checks,
             gate_values=model.mot.geometry_latent_adapter.gates.detach().float().cpu().tolist(),
             peak_allocated_gb=torch.cuda.max_memory_allocated()/1e9)

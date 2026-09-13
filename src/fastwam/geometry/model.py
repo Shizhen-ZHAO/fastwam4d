@@ -7,12 +7,13 @@ from pathlib import Path
 
 import torch
 from fastwam.models.wan22.fastwam import FastWAM
+from fastwam.models.wan22.fastwam_joint import FastWAMJoint
 from fastwam.models.wan22.geometry_adapter import GeometryTokenizer, VAELatentGeometryAdapter
 from fastwam.models.wan22.geometry_features import validate_raw_geometry
 from .rng import preserve_rng
 
 
-class GeometryFastWAM(FastWAM):
+class _GeometryConditioning:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.geometry_config = None
@@ -97,13 +98,6 @@ class GeometryFastWAM(FastWAM):
             self._active_geometry = None
 
     @torch.no_grad()
-    @wraps(FastWAM.infer_action)
-    def infer_action(self,*args,**kwargs):
-        self.eval()
-        with self._inference_geometry(kwargs):
-            return super().infer_action(*args,**kwargs)
-
-    @torch.no_grad()
     @wraps(FastWAM.infer_joint)
     def infer_joint(self,*args,**kwargs):
         self.eval()
@@ -140,3 +134,31 @@ class GeometryFastWAM(FastWAM):
             raise ValueError('Checkpoint is missing trained geometry tensors')
         del payload
         return super().load_checkpoint(path,optimizer=optimizer)
+
+
+class GeometryFastWAM(_GeometryConditioning, FastWAM):
+    @torch.no_grad()
+    @wraps(FastWAM.infer_action)
+    def infer_action(self, *args, **kwargs):
+        self.eval()
+        with self._inference_geometry(kwargs):
+            return super().infer_action(*args, **kwargs)
+
+
+class GeometryFastWAMJoint(_GeometryConditioning, FastWAMJoint):
+    """Retain joint's full-video attention and joint video/action denoising."""
+
+    @torch.no_grad()
+    @wraps(FastWAMJoint.infer_action)
+    def infer_action(self, *args, **kwargs):
+        # LIBERO inspects this signature to supply joint's num_video_frames.
+        self.eval()
+        with self._inference_geometry(kwargs):
+            return super().infer_action(*args, **kwargs)
+
+    def _geometry_metadata(self):
+        metadata = super()._geometry_metadata()
+        # Joint/uncond weights can have identical shapes but different semantics.
+        # Keep old uncond sidecars compatible; reject cross-variant loading.
+        metadata['variant'] = 'joint'
+        return metadata

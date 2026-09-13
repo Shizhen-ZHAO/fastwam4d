@@ -11,7 +11,11 @@ from libero_track4world import load_paths,print_paths,validate_paths,validate_mo
 ROOT=Path(__file__).resolve().parents[1]
 
 
-def plus_environment(paths):
+def variant_task(variant):
+    return {'uncond': 'libero_geometry_ablation', 'joint': 'libero_joint_geometry_ablation'}[variant]
+
+
+def plus_environment(paths, variant='uncond'):
     env = dict(os.environ)
     dry = env.get('DRY_RUN') == '1'
     for key, setting in (('LIBERO_PLUS_ROOT', 'libero_plus_repo'),
@@ -22,7 +26,7 @@ def plus_environment(paths):
         if value and not dry and not Path(value).expanduser().is_dir():
             raise FileNotFoundError(f'{key}: {value}')
         env[key] = str(value or f'/configure/{setting}')
-    env.update(TASK_CONFIG='libero_geometry_ablation', EVAL_MODE='uncond',
+    env.update(TASK_CONFIG=variant_task(variant), EVAL_MODE=variant,
         MODEL_BASE=str(paths['model_base']), MODEL_ID=str(paths['model_id']),
         TOKENIZER_MODEL_ID=str(paths['tokenizer_model_id']),
         REDIRECT_COMMON_FILES=str(paths['redirect_common_files']).lower(),
@@ -43,7 +47,10 @@ def main():
     p.add_argument('mode',choices=['train','eval','eval-plus'])
     p.add_argument('--paths',default=str(ROOT/'configs/paths/libero_track4world_local.yaml'))
     p.add_argument('--manager',action='store_true')
+    p.add_argument('--variant', choices=['uncond','joint'], default=os.environ.get('FASTWAM_VARIANT','uncond'))
     args,overrides=p.parse_known_args()
+    if args.variant not in ('uncond','joint'):
+        p.error('FASTWAM_VARIANT must be uncond or joint')
     paths=apply_path_overrides(load_paths(args.paths),overrides)
     if Path(args.paths).resolve().parent != (ROOT/'configs/paths').resolve():
         raise ValueError('Place your YAML in configs/paths')
@@ -53,7 +60,7 @@ def main():
         raise ValueError('geometry_enabled must be true or false')
     enabled=not switches or switches[-1]=='true'
     if args.mode == 'eval-plus':
-        env = plus_environment(paths)
+        env = plus_environment(paths, args.variant)
         command=['bash',str(ROOT/'experiments/libero_plus/run_eval.sh'),
                  f'+paths={Path(args.paths).stem}',*overrides]
         sys.stdout.flush()
@@ -84,7 +91,7 @@ def main():
         os.environ['LIBERO_CONFIG_PATH']=str(cfgdir)
         os.environ.setdefault('MUJOCO_GL','egl')
         entry=ROOT/'experiments/libero'/('run_libero_manager.py' if args.manager else 'eval_libero_single.py')
-    sys.argv=[str(entry),'task=libero_geometry_ablation',f'+paths={Path(args.paths).stem}',*overrides]
+    sys.argv=[str(entry),f'task={variant_task(args.variant)}',f'+paths={Path(args.paths).stem}',*overrides]
     try:
         runpy.run_path(str(entry),run_name='__main__')
     finally:

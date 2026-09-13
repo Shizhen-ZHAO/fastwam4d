@@ -2,7 +2,7 @@
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/geometry_paths.sh"
 : "${CKPT:?Set full trained .pt; geometry mode also needs adjacent .pt.geometry.json}"
-command=(python scripts/geometry_ablation.py eval --paths "$GEOMETRY_PATHS")
+command=(python scripts/geometry_ablation.py eval --variant "${FASTWAM_VARIANT:-uncond}" --paths "$GEOMETRY_PATHS")
 case "${EVAL_MODE:-single}" in single) ;; manager) command+=(--manager);; *) exit 2;; esac
 if [[ -z "${EVAL_OUTPUT_DIR:-}" ]]; then EVAL_OUTPUT_DIR="\${paths.output_root}/eval/$(date +%Y-%m-%d_%H-%M-%S)"; fi
 command+=("geometry_enabled=${GEOMETRY_ENABLED:-true}" "ckpt=$CKPT"

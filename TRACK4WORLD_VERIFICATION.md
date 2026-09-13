@@ -1,5 +1,51 @@
 # FastWAM_3_track 本机验证（2026-09-13）
 
+## 2026-09-14 joint 再次审查
+
+本轮未修改模型、训练或测试实现；新增完整执行 prompt 并补充文档。
+
+- 再次执行完整测试集合：94 passed、2 skipped（均缺外部参考仓库），32.52秒。
+- 原 FastWAM/FastWAMJoint/runtime 和原 joint 启动脚本仍与3177039一致；shell语法、diff空白检查通过。
+- 对真实 LeRobot 样本0/7重新在线提取并比较既有缓存：所有mask完全一致；
+  track最大相对RMSE `0.00026595385861583054`，track_aux `0.0001476799079682678`，阈值0.005内。
+- 两张A100、ZeRO-1、小尺寸joint、真实两样本离线缓存再次完成4次更新；每rank175个参数张量更新，
+  tracker前向0次，checkpoint和完整state恢复通过。
+  报告：`outputs/verification/joint_review_20260914_ds2/report_rank0.json`、`report_rank1.json`。
+- 使用本轮保存的小模型joint权重，在真实LIBERO再次完成8步等待后2步控制，真实在线提取2次，
+  动作有限且均为 `[32,7]`，峰值allocated约8.13GB。
+  报告：`outputs/verification/joint_review_20260914_sim/report.json`。
+- `JOINT_CLUSTER_AGENT_PROMPT.md` 的18段Bash语法、20个路径key及16卡smoke配置解析检查通过。
+
+没有运行全量提取、全尺寸5B训练、16GPU训练或真实Plus评测；不声称loss长期收敛或几何收益。
+迁移注意：完整复制缓存含manifest/HDF5/lock；普通在线评测预检仍要求有效训练数据/文本缓存路径；
+生产者指纹要求保留冻结模型源码/权重；旧uncond提交f424d09不包含joint修改，需获取后续joint提交。
+
+## joint 增补验证
+
+在已推送的 uncond 几何版本 `f424d09` 上增加 joint 接线；本节对应新增的本地修改，
+不是旧 uncond GPU 报告。原核心 FastWAM/FastWAMJoint/runtime 与基线字节一致。
+
+- 最终 `geometry_tests` + `experiments/libero_plus/test`：94 passed、2 skipped。
+  两项跳过因未设置外部 `FASTWAM_REFERENCE_REPO`；shell语法和 `git diff --check` 通过。
+- joint 零 gate 与原 joint 的初始化/RNG、loss、梯度、第一次 AdamW 更新一致。
+- joint 的 action-to-full-video attention mask 未替换；三种推理入口零 gate 输出一致，
+  嵌套调用仅提取一次；非零 gate 三路梯度非零，未来 latent target 不变。
+- joint/uncond 同配置 raw 特征一致，可复用缓存；不同 variant 的 policy sidecar 拒绝混用。
+- joint 原配方对比、16卡单机/两机启动配置、普通 LIBERO 与 Plus 路由均有回归测试。
+- 双 A100、ZeRO-1、小尺寸实际 joint WAM/VAE、真实 LeRobot 样本0/7：两个 rank
+  均完成4次更新、175个参数张量变化、离线 tracker 调用0次，权重及完整state恢复通过。
+  报告：`outputs/verification/joint_ds2_v1/report_rank0.json`、`report_rank1.json`。
+- 真实普通 LIBERO、上述训练后的 joint 小模型、真实缓存T5：8步等待后2步控制，
+  实际在线 Track4World/DA3 提取2次，动作均有限且形状 `[32,7]`。
+  峰值 allocated 8.13GB；报告：`outputs/verification/joint_sim_v1/report.json`。
+- 本次未重抽 raw 特征，直接读取此前验证过的两样本缓存。训练/仿真测试均已退出，
+  其他GPU任务未停止，检查后两卡显存回到各约21GB。
+
+上述仍是有边界的接线检查，不是完整5B/16卡生产训练，不证明loss长期下降、几何收益、
+任务成功率或真实Plus rollout。复现与集群命令见 `JOINT_TRACK4WORLD.md`。
+
+## 原 uncond 验证记录
+
 基线 FastWAM_3：`31770396e672bfa283f4283e59775057ab69ec89`。
 本目录独立分支 `fastwam-3-track`；本次验收完成时尚未提交/推送，原 FastWAM_3 工作区保持干净。
 没有停止或替换其他 GPU 任务。检查结束后本次 GPU 进程全部退出。
